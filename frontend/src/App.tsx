@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
   Train as TrainIcon,
   Play,
-  CheckCircle,
+  RotateCcw,
   Clock,
-  Sparkles,
-  RefreshCw,
-  Cpu,
+  ChevronDown,
+  HelpCircle,
 } from 'lucide-react';
 import {
   getCorridor,
@@ -26,7 +25,7 @@ import type {
   Train,
 } from './types';
 import { KPICards } from './components/KPICards';
-import { MareyChart } from './components/MareyChart';
+import { GanttChart } from './components/GanttChart';
 import { DemandTable } from './components/DemandTable';
 import { DisruptionPanel } from './components/DisruptionPanel';
 import { HandshakeModal } from './components/HandshakeModal';
@@ -45,13 +44,20 @@ export const App: React.FC = () => {
     train_cancellations: 0,
   });
 
+  // Filter States (matching screenshot toolbar)
+  const [filterSegment, setFilterSegment] = useState<string>('ALL');
+  const [filterDepartment, setFilterDepartment] = useState<string>('ALL');
+  const [filterBlockStatus, setFilterBlockStatus] = useState<string>('ALL');
+  const [filterTaskStatus, setFilterTaskStatus] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
   // UI Interactive States
-  const [isOptimizing, setIsOptimizing] = useState(true);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const [isDisrupting, setIsDisrupting] = useState(false);
   const [activeDisruption, setActiveDisruption] = useState<DisruptionRequest | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [isHandshakeOpen, setIsHandshakeOpen] = useState(false);
-  const [lastOptimizedAt, setLastOptimizedAt] = useState<string | null>(null);
+  const [showDisruptionPanel, setShowDisruptionPanel] = useState(false);
   const [currentTime, setCurrentTime] = useState<string>('');
 
   // Live Control Room Clock
@@ -89,11 +95,8 @@ export const App: React.FC = () => {
         setDemands(demandData);
         setScheduledBlocks(optData.scheduled_blocks);
         setMetrics(optData.metrics);
-        setLastOptimizedAt(new Date().toLocaleTimeString('en-IN', { hour12: false }));
       } catch {
         // Fallback is handled automatically in api.ts
-      } finally {
-        if (isMounted) setIsOptimizing(false);
       }
     };
     loadData();
@@ -109,7 +112,6 @@ export const App: React.FC = () => {
       const optData = await runOptimize();
       setScheduledBlocks(optData.scheduled_blocks);
       setMetrics(optData.metrics);
-      setLastOptimizedAt(new Date().toLocaleTimeString('en-IN', { hour12: false }));
     } finally {
       setIsOptimizing(false);
     }
@@ -121,7 +123,6 @@ export const App: React.FC = () => {
     try {
       const res = await simulateDisruption(req);
       setActiveDisruption(req);
-      // Reload trains to reflect shifted schedule
       const updatedTrains = await getTrains();
       setTrains(updatedTrains);
       setScheduledBlocks(res.scheduled_blocks);
@@ -185,151 +186,233 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
-      {/* Top Controller Header Bar */}
-      <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-6 py-3.5 flex flex-wrap items-center justify-between sticky top-0 z-40 gap-4">
-        {/* Left: Brand & Corridor Metadata */}
-        <div className="flex items-center space-x-3.5">
-          <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
-            <TrainIcon className="w-6 h-6" />
+    <div className="min-h-screen bg-[#0f141c] text-slate-100 flex flex-col font-sans">
+      {/* 1. Top Enterprise Header Bar (matching screenshot navbar) */}
+      <header className="bg-[#151c28] border-b border-[#253246] px-5 py-2.5 flex flex-wrap items-center justify-between sticky top-0 z-40 gap-3 text-xs">
+        {/* Left: Brand Pill & Navigation Tabs */}
+        <div className="flex items-center space-x-4">
+          {/* Brand Pill matching screenshot */}
+          <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-md bg-sky-950 border border-sky-600/70 text-sky-200 font-bold">
+            <TrainIcon className="w-4 h-4 text-sky-400" />
+            <span className="tracking-wide">RAILSYNC — Operational</span>
+            <ChevronDown className="w-3.5 h-3.5 text-sky-400" />
           </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-lg font-black tracking-wider text-slate-100 uppercase">
-                RailSync<span className="text-cyan-400">-AI</span>
-              </h1>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-300 font-mono font-bold">
-                ABPS v1.0
-              </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-950 border border-purple-800 text-purple-300 font-mono font-bold">
-                CP-SAT Discrete Solver
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 font-mono">
-              {corridor?.corridor_name || 'Ghaziabad (GZB) – Aligarh (ALJN) Corridor • 106.0 KM'}
-            </p>
-          </div>
+
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center space-x-1 text-slate-300">
+            <button className="px-3 py-1 rounded text-slate-100 font-semibold bg-[#1f293b]">
+              Gantt Timeline
+            </button>
+            <button
+              onClick={() => {}}
+              className="px-3 py-1 rounded text-slate-400 hover:text-slate-200 hover:bg-[#1a2332] transition-colors"
+            >
+              Fleet & Possessions
+            </button>
+            <button
+              onClick={() => setShowDisruptionPanel((prev) => !prev)}
+              className={`px-3 py-1 rounded transition-colors ${
+                showDisruptionPanel
+                  ? 'bg-amber-950 text-amber-300 border border-amber-600'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-[#1a2332]'
+              }`}
+            >
+              Disruption Simulator
+            </button>
+            <button
+              onClick={() => {
+                if (scheduledBlocks.length > 0) {
+                  handleOpenHandshake(scheduledBlocks[0].demand_id);
+                }
+              }}
+              className="px-3 py-1 rounded text-slate-400 hover:text-slate-200 hover:bg-[#1a2332] transition-colors"
+            >
+              Safety Handshake (G&SR)
+            </button>
+          </nav>
         </div>
 
-        {/* Right: Actions, Live Clock & Status */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Live Controller Digital Clock */}
-          <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800 font-mono text-xs text-slate-300 shadow-inner">
-            <Clock className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            <span className="text-cyan-300 font-bold tracking-widest">{currentTime || '12:00:00'}</span>
+        {/* Right: Controller, Clock & Help */}
+        <div className="flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-2 text-slate-400 text-[11px] font-mono">
+            <span>Corridor:</span>
+            <span className="text-slate-200 font-semibold">Ghaziabad – Aligarh (106 KM)</span>
+          </div>
+
+          {/* Digital Monospace IST Clock */}
+          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-[#0f141c] border border-[#253246] font-mono text-[11px] text-slate-300">
+            <Clock className="w-3.5 h-3.5 text-sky-400" />
+            <span className="font-bold text-sky-300">{currentTime || '01:00:00'}</span>
             <span className="text-[10px] text-slate-500">IST</span>
           </div>
 
-          {/* System Mode Pill */}
-          <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-emerald-950/50 border border-emerald-800/60 text-emerald-400 font-mono text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="font-semibold">Autonomous ABPS Active</span>
+          {/* Controller Profile */}
+          <div className="flex items-center space-x-2">
+            <div className="w-6 h-6 rounded-full bg-sky-900 border border-sky-500 flex items-center justify-center text-sky-200 text-[11px] font-bold">
+              SC
+            </div>
+            <span className="hidden sm:inline text-[11px] font-mono text-slate-300">
+              SC-DLI-04
+            </span>
           </div>
 
-          {/* Reset Baseline Button */}
           <button
-            onClick={handleReset}
-            disabled={isDisrupting || isOptimizing}
-            title="Reset to initial corridor baseline"
-            className="p-2 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-slate-200 border border-slate-700 transition-colors"
+            title="Help center"
+            className="text-slate-400 hover:text-slate-200 text-xs flex items-center space-x-1"
           >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-
-          {/* Primary Action: Run CP-SAT Optimizer */}
-          <button
-            onClick={handleRunOptimizer}
-            disabled={isOptimizing}
-            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 via-teal-600 to-emerald-600 text-slate-950 font-bold text-xs hover:from-cyan-500 hover:to-emerald-500 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all active:scale-95 disabled:opacity-60 font-mono"
-          >
-            {isOptimizing ? (
-              <>
-                <div className="h-3.5 w-3.5 rounded-full border-2 border-slate-950 border-t-transparent animate-spin" />
-                <span>Optimizing Possessions...</span>
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4 fill-slate-950" />
-                <span>Run CP-SAT Optimizer</span>
-              </>
-            )}
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span className="hidden xl:inline">Help</span>
           </button>
         </div>
       </header>
 
-      {/* Optimization Status Bar */}
-      <div className="bg-slate-900/60 border-b border-slate-800/80 px-6 py-2 flex flex-wrap items-center justify-between text-xs font-mono text-slate-400 gap-2">
-        <div className="flex items-center space-x-4">
-          <span className="flex items-center gap-1.5 text-slate-300">
-            <Cpu className="w-3.5 h-3.5 text-purple-400" />
-            <span>OR-Tools CP-SAT discrete solver</span>
-          </span>
-          <span>•</span>
-          <span>Disjunctive safety window: 5 min clearance buffer</span>
-          <span>•</span>
-          <span>Joint bundling synchronization threshold: ±15 min</span>
-        </div>
-        {lastOptimizedAt && (
-          <div className="flex items-center gap-1.5 text-emerald-400">
-            <CheckCircle className="w-3.5 h-3.5" />
-            <span>Optimal Schedule Solved at {lastOptimizedAt}</span>
+      {/* 2. Operational Filter Toolbar (Directly mirrors reference screenshot filter strip) */}
+      <div className="bg-[#1a2332] border-b border-[#2a374c] px-5 py-2.5 text-xs">
+        <div className="flex flex-col space-y-2">
+          <div className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+            Real-time corridor possession status
           </div>
-        )}
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            {/* 1. Track Segment Filter */}
+            <div>
+              <label className="block text-[10px] text-slate-400 mb-0.5 uppercase">Segment</label>
+              <select
+                value={filterSegment}
+                onChange={(e) => setFilterSegment(e.target.value)}
+                className="w-full px-2 py-1 rounded bg-[#101620] border border-[#2d3b50] text-slate-200 text-[11px] focus:outline-none focus:border-sky-500"
+              >
+                <option value="ALL">Select... (All Segments)</option>
+                <option value="seg-1">0–30 KM (GZB–Ajaibpur)</option>
+                <option value="seg-2">30–60 KM (Ajaibpur–Wair)</option>
+                <option value="seg-3">60–106 KM (Wair–Aligarh)</option>
+              </select>
+            </div>
+
+            {/* 2. Department Filter */}
+            <div>
+              <label className="block text-[10px] text-slate-400 mb-0.5 uppercase">Department</label>
+              <select
+                value={filterDepartment}
+                onChange={(e) => setFilterDepartment(e.target.value)}
+                className="w-full px-2 py-1 rounded bg-[#101620] border border-[#2d3b50] text-slate-200 text-[11px] focus:outline-none focus:border-sky-500"
+              >
+                <option value="ALL">Select... (All Depts)</option>
+                <option value="ENGINEERING">TMS Engineering (P-Way)</option>
+                <option value="TRACTION_TRD">TDMS Electrical (OHE)</option>
+                <option value="SIGNAL_TELECOM">SMMS S&T (Signalling)</option>
+              </select>
+            </div>
+
+            {/* 3. Block Status Filter */}
+            <div>
+              <label className="block text-[10px] text-slate-400 mb-0.5 uppercase">Block status</label>
+              <select
+                value={filterBlockStatus}
+                onChange={(e) => setFilterBlockStatus(e.target.value)}
+                className="w-full px-2 py-1 rounded bg-[#101620] border border-[#2d3b50] text-slate-200 text-[11px] focus:outline-none focus:border-sky-500"
+              >
+                <option value="ALL">Select... (All Statuses)</option>
+                <option value="BUNDLED">Integrated / Joint</option>
+                <option value="AUTHORIZED">Authorized (PTW Active)</option>
+              </select>
+            </div>
+
+            {/* 4. Task Status Filter */}
+            <div>
+              <label className="block text-[10px] text-slate-400 mb-0.5 uppercase">Task status</label>
+              <select
+                value={filterTaskStatus}
+                onChange={(e) => setFilterTaskStatus(e.target.value)}
+                className="w-full px-2 py-1 rounded bg-[#101620] border border-[#2d3b50] text-slate-200 text-[11px] focus:outline-none focus:border-sky-500"
+              >
+                <option value="ALL">Select... (All Tasks)</option>
+                <option value="SCHEDULED">Scheduled</option>
+                <option value="PENDING">Pending Handshake</option>
+              </select>
+            </div>
+
+            {/* 5. Action / Quick Run */}
+            <div>
+              <label className="block text-[10px] text-slate-400 mb-0.5 uppercase">Action</label>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={handleRunOptimizer}
+                  disabled={isOptimizing}
+                  className="flex-1 px-2 py-1 rounded bg-sky-700 hover:bg-sky-600 text-white font-semibold text-[11px] transition-colors disabled:opacity-60 flex items-center justify-center space-x-1"
+                >
+                  <Play className="w-3 h-3" />
+                  <span>{isOptimizing ? 'Solving...' : 'Run CP-SAT'}</span>
+                </button>
+                <button
+                  onClick={handleReset}
+                  title="Reset Baseline"
+                  className="px-2 py-1 rounded bg-[#202a3a] hover:bg-[#283549] text-slate-300 border border-[#2d3b50] transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+
+            {/* 6. Entity Search */}
+            <div>
+              <label className="block text-[10px] text-slate-400 mb-0.5 uppercase">Entity</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Asset or train name..."
+                  className="w-full px-2 py-1 rounded bg-[#101620] border border-[#2d3b50] text-slate-200 text-[11px] focus:outline-none focus:border-sky-500"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Main Dashboard Workspace */}
-      <main className="flex-1 p-6 space-y-6 max-w-[1600px] mx-auto w-full">
-        {/* Section 1: KPI Analytics Cards */}
-        <section>
-          <KPICards metrics={metrics} />
-        </section>
-
-        {/* Section 2: Interactive Marey Chart */}
-        <section className="space-y-2">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Time-Distance Space Chart & Cross-Departmental Possessions</span>
-            </h2>
-            <span className="text-[11px] font-mono text-slate-500">
-              Click any maintenance block to review or issue digital safety PTW
-            </span>
-          </div>
-          <MareyChart
-            stations={corridor?.stations || []}
+      {/* 3. Main Dashboard Workspace */}
+      <main className="flex-1 p-5 space-y-4 max-w-[1600px] w-full mx-auto">
+        {/* Disruption Simulator Drawer (Toggleable) */}
+        {showDisruptionPanel && (
+          <DisruptionPanel
             trains={trains}
-            blocks={scheduledBlocks}
-            onSelectBlock={(b) => handleOpenHandshake(b.demand_id)}
-            selectedBlockId={selectedBlockId}
+            onSimulate={handleSimulateDisruption}
+            onReset={handleReset}
+            isLoading={isDisrupting}
+            activeDisruption={activeDisruption}
           />
-        </section>
+        )}
 
-        {/* Section 3: Disruption Simulator Panel + Multi-Department Demand Table */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column: Disruption Simulator */}
-          <div className="lg:col-span-5 space-y-4">
-            <DisruptionPanel
-              trains={trains}
-              onSimulate={handleSimulateDisruption}
-              onReset={handleReset}
-              isLoading={isDisrupting}
-              activeDisruption={activeDisruption}
-            />
-          </div>
+        {/* Operational Telemetry Metrics Ribbon */}
+        <KPICards metrics={metrics} />
 
-          {/* Right Column: Multi-Department Demand Table */}
-          <div className="lg:col-span-7 space-y-4">
-            <DemandTable
-              demands={demands}
-              blocks={scheduledBlocks}
-              onOpenHandshake={handleOpenHandshake}
-              selectedBlockId={selectedBlockId}
-            />
-          </div>
-        </section>
+        {/* Core Timeline: Gantt Chart (Replaces Marey Chart) */}
+        <GanttChart
+          trains={trains}
+          scheduledBlocks={scheduledBlocks}
+          demands={demands}
+          stations={corridor?.stations || []}
+          onSelectBlock={handleOpenHandshake}
+          selectedBlockId={selectedBlockId}
+          filterDepartment={filterDepartment}
+          filterSegment={filterSegment}
+        />
+
+        {/* High-Density Asset & Possession Fleet List (matching screenshot layout) */}
+        <DemandTable
+          demands={demands}
+          blocks={scheduledBlocks}
+          trains={trains}
+          onOpenHandshake={handleOpenHandshake}
+          selectedBlockId={selectedBlockId}
+          filterDepartment={filterDepartment}
+          filterStatus={filterBlockStatus}
+          searchQuery={searchQuery}
+        />
       </main>
 
-      {/* Digital Safety Handshake (BDMS / PTW) Modal */}
+      {/* Safety Handshake Dialog (G&SR Rule 15.06 BDMS) */}
       <HandshakeModal
         block={activeSelectedBlock}
         demand={activeSelectedDemand}
@@ -337,14 +420,6 @@ export const App: React.FC = () => {
         onClose={() => setIsHandshakeOpen(false)}
         onGrantSuccess={handleGrantSuccess}
       />
-
-      {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950 px-6 py-4 text-center text-xs font-mono text-slate-500">
-        <p>
-          RailSync-AI (ABPS) • Ministry of Railways Hackathon Prototype • G&SR Rule 15.06 Compliant
-          Digital Handshakes
-        </p>
-      </footer>
     </div>
   );
 };

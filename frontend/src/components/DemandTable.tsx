@@ -1,310 +1,446 @@
 import React, { useState, useMemo } from 'react';
 import {
   Wrench,
-  Layers,
-  ShieldCheck,
-  Search,
-  AlertTriangle,
-  Flame,
-  ArrowRight,
+  Zap,
+  Radio,
+  Train as TrainIcon,
+  ChevronRight,
+  ChevronDown,
+  CheckCircle2,
 } from 'lucide-react';
-import type { MaintenanceDemand, ScheduledBlock } from '../types';
+import type { MaintenanceDemand, ScheduledBlock, Train } from '../types';
 
 interface DemandTableProps {
   demands: MaintenanceDemand[];
   blocks: ScheduledBlock[];
+  trains?: Train[];
   onOpenHandshake: (blockId: string) => void;
   selectedBlockId?: string | null;
+  filterDepartment?: string;
+  filterStatus?: string;
+  searchQuery?: string;
 }
 
 export const DemandTable: React.FC<DemandTableProps> = ({
   demands,
   blocks,
+  trains = [],
   onOpenHandshake,
   selectedBlockId,
+  filterDepartment = 'ALL',
+  filterStatus = 'ALL',
+  searchQuery = '',
 }) => {
-  const [filterDept, setFilterDept] = useState<'ALL' | 'TMS' | 'TDMS' | 'SMMS'>('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'POSSESSIONS' | 'TRAINS'>('POSSESSIONS');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Map demand ID to its scheduled block
-  const blockByDemandId = useMemo(() => {
+  // Map demand ID to ScheduledBlock
+  const blockMap = useMemo(() => {
     const map = new Map<string, ScheduledBlock>();
-    for (const b of blocks) {
-      map.set(b.demand_id, b);
-    }
+    blocks.forEach((b) => map.set(b.demand_id, b));
     return map;
   }, [blocks]);
 
-  // Format minutes into HH:MM
   const formatTime = (min?: number): string => {
     if (min === undefined) return '--:--';
-    const h = Math.floor(min / 60);
-    const m = Math.floor(min % 60);
+    const h = Math.floor(min / 60) % 24;
+    const m = min % 60;
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
   };
 
+  // Filter demands
   const filteredDemands = useMemo(() => {
     return demands.filter((d) => {
-      const matchesDept = filterDept === 'ALL' || d.system === filterDept;
-      const matchesQuery =
-        searchQuery.trim() === '' ||
-        d.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.activity.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.asset_type.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesDept && matchesQuery;
+      if (filterDepartment !== 'ALL' && d.department !== filterDepartment) return false;
+
+      const block = blockMap.get(d.id);
+      if (filterStatus === 'BUNDLED' && !block?.is_bundled) return false;
+      if (filterStatus === 'AUTHORIZED' && block?.status !== 'AUTHORIZED') return false;
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const match =
+          d.id.toLowerCase().includes(q) ||
+          d.activity.toLowerCase().includes(q) ||
+          d.asset_type.toLowerCase().includes(q) ||
+          d.system.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      return true;
     });
-  }, [demands, filterDept, searchQuery]);
+  }, [demands, filterDepartment, filterStatus, searchQuery, blockMap]);
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl backdrop-blur overflow-hidden">
-      {/* Table Header Controls */}
-      <div className="flex flex-wrap items-center justify-between border-b border-slate-800 px-5 py-3.5 bg-slate-950/60 gap-3">
-        <div className="flex items-center space-x-3">
-          <div className="rounded-lg bg-purple-500/10 p-2 text-purple-400 border border-purple-500/20">
-            <Wrench className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold tracking-wider text-slate-100 uppercase flex items-center gap-2">
-              Cross-Department Maintenance Demands
-              <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-purple-300 font-mono border border-slate-700">
-                TMS • TDMS • SMMS
-              </span>
-            </h3>
-            <p className="text-xs text-slate-400 font-mono">
-              Dynamic Criticality Scoring ($DCS_m$) & G&SR PTW Digital Handshakes
-            </p>
-          </div>
+    <div className="bg-[#1a2230] border border-[#2d3a4f] rounded-lg shadow-sm overflow-hidden text-slate-200">
+      {/* Sub-header Tabs */}
+      <div className="px-4 py-2 bg-[#141b26] border-b border-[#2d3a4f] flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setActiveTab('POSSESSIONS')}
+            className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
+              activeTab === 'POSSESSIONS'
+                ? 'bg-[#27354a] text-slate-100 border border-[#3b4e6b]'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Corridor Possessions & Demands ({filteredDemands.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('TRAINS')}
+            className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
+              activeTab === 'TRAINS'
+                ? 'bg-[#27354a] text-slate-100 border border-[#3b4e6b]'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Live Train Timetable & Fleet ({trains.length})
+          </button>
         </div>
 
-        {/* Filter Controls & Search */}
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          {/* Search Box */}
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search demand or activity..."
-              className="pl-8 pr-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:border-cyan-500 font-mono w-44 sm:w-56"
-            />
-          </div>
-
-          {/* Department Filter Tabs */}
-          <div className="flex items-center rounded-lg bg-slate-800/80 p-1 border border-slate-700">
-            {(['ALL', 'TMS', 'TDMS', 'SMMS'] as const).map((dept) => (
-              <button
-                key={dept}
-                onClick={() => setFilterDept(dept)}
-                className={`px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
-                  filterDept === dept
-                    ? 'bg-purple-600 text-white font-bold shadow'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
-                }`}
-              >
-                {dept === 'ALL' ? 'All (5)' : dept}
-              </button>
-            ))}
-          </div>
+        <div className="text-[11px] text-slate-400 font-mono">
+          {activeTab === 'POSSESSIONS' ? (
+            <span>TMS • TDMS • SMMS High-Density Asset Records</span>
+          ) : (
+            <span>COA Active Train Consists & Trajectories</span>
+          )}
         </div>
       </div>
 
-      {/* Table View */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs text-slate-300">
-          <thead className="bg-slate-950/80 text-[11px] font-mono uppercase text-slate-400 border-b border-slate-800">
-            <tr>
-              <th className="px-4 py-3">Demand ID & Dept</th>
-              <th className="px-4 py-3">Activity & Asset</th>
-              <th className="px-4 py-3">Location (KM)</th>
-              <th className="px-4 py-3">Duration & Window</th>
-              <th className="px-4 py-3">Criticality Score ($DCS$)</th>
-              <th className="px-4 py-3">Bundling & Integration</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Digital PTW Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800/60 font-mono">
-            {filteredDemands.map((demand) => {
-              const block = blockByDemandId.get(demand.id);
+      {/* Rows Container */}
+      <div className="divide-y divide-[#253246] bg-[#121822]">
+        {activeTab === 'POSSESSIONS' ? (
+          filteredDemands.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-500 font-mono">
+              No maintenance demands match the selected filters.
+            </div>
+          ) : (
+            filteredDemands.map((demand) => {
+              const block = blockMap.get(demand.id);
               const isSelected = selectedBlockId === demand.id;
-              const isBundled = block?.is_bundled ?? false;
+              const isExpanded = expandedId === demand.id;
+              const isBundled = block?.is_bundled;
               const isAuthorized = block?.status === 'AUTHORIZED';
-              const score = demand.criticality_score ?? block?.criticality_score ?? 50.0;
+
+              // Specific Department Icon
+              const renderDeptIcon = () => {
+                if (demand.department === 'TRACTION_TRD') {
+                  return (
+                    <div className="w-8 h-8 rounded-full bg-amber-950/80 border border-amber-600/80 flex items-center justify-center text-amber-400 flex-shrink-0">
+                      <Zap className="w-4 h-4" />
+                    </div>
+                  );
+                }
+                if (demand.department === 'SIGNAL_TELECOM') {
+                  return (
+                    <div className="w-8 h-8 rounded-full bg-emerald-950/80 border border-emerald-600/80 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                      <Radio className="w-4 h-4" />
+                    </div>
+                  );
+                }
+                return (
+                  <div className="w-8 h-8 rounded-full bg-sky-950/80 border border-sky-600/80 flex items-center justify-center text-sky-400 flex-shrink-0">
+                    <Wrench className="w-4 h-4" />
+                  </div>
+                );
+              };
+
+              // Determine row background styling: Subtle warm tint for high overdue / critical items
+              const isDegradedOrCritical = demand.severity === 'CRITICAL' || demand.urgency_days_overdue > 10;
+              const rowBg = isSelected
+                ? 'bg-[#222e40] ring-1 ring-sky-400'
+                : isDegradedOrCritical
+                ? 'bg-[#1c222b] hover:bg-[#202834]'
+                : 'bg-[#151c27] hover:bg-[#18212e]';
 
               return (
-                <tr
-                  key={demand.id}
-                  className={`transition-colors hover:bg-slate-800/40 ${
-                    isSelected ? 'bg-cyan-950/30 border-l-2 border-cyan-400' : ''
-                  }`}
-                >
-                  {/* Demand ID & Dept Badge */}
-                  <td className="px-4 py-3 font-semibold">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-slate-100">{demand.id}</span>
-                      <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                          demand.system === 'TMS'
-                            ? 'bg-blue-950 text-blue-300 border border-blue-800'
-                            : demand.system === 'TDMS'
-                            ? 'bg-amber-950 text-amber-300 border border-amber-800'
-                            : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                        }`}
-                      >
-                        {demand.system}
-                      </span>
+                <div key={demand.id} className={`${rowBg} transition-colors`}>
+                  {/* Main High-Density Row */}
+                  <div className="px-4 py-2.5 flex flex-wrap lg:flex-nowrap items-center justify-between gap-3 text-xs">
+                    {/* Left: Round icon, Title & Subtitle */}
+                    <div className="flex items-center space-x-3 min-w-[260px] lg:w-[320px] flex-shrink-0">
+                      {renderDeptIcon()}
+                      <div className="truncate">
+                        <div className="flex items-center space-x-2 truncate">
+                          <span className="font-bold text-slate-100 truncate hover:text-sky-300 transition-colors">
+                            {demand.id} • {demand.activity}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 font-mono flex items-center space-x-1.5 truncate">
+                          <span>{demand.department.replace('_', ' ')}:</span>
+                          <span className="text-slate-300 font-semibold">{demand.duration_minutes} min</span>
+                          <span>•</span>
+                          <span>KM {demand.start_km.toFixed(1)}–{demand.end_km.toFixed(1)}</span>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-[10px] text-slate-500 font-sans mt-0.5">
-                      {demand.department.replace('_', ' ')}
-                    </p>
-                  </td>
 
-                  {/* Activity & Asset */}
-                  <td className="px-4 py-3 font-sans">
-                    <div className="font-medium text-slate-200">{demand.activity}</div>
-                    <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
-                      <span>{demand.asset_type}</span>
-                      {demand.power_block_required && (
-                        <span className="text-[9px] px-1 py-0.2 rounded bg-amber-950 text-amber-300 border border-amber-800">
-                          Power Block
-                        </span>
-                      )}
-                      {demand.signal_disconnection_required && (
-                        <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
-                          Signal Disconn.
-                        </span>
-                      )}
+                    {/* Middle Columns: System, Specs, Interlocks, Windows */}
+                    <div className="hidden sm:flex items-center space-x-4 text-[11px] font-mono text-slate-300 flex-1 justify-around px-2">
+                      {/* System Code */}
+                      <div className="flex flex-col items-start min-w-[60px]">
+                        <span className="text-[10px] text-slate-500 uppercase">SYS</span>
+                        <span className="font-semibold text-slate-200">{demand.system}</span>
+                      </div>
+
+                      {/* Track GMT */}
+                      <div className="flex flex-col items-start min-w-[65px]">
+                        <span className="text-[10px] text-slate-500 uppercase">GMT</span>
+                        <span className="text-slate-300">{demand.track_gmt} GMT</span>
+                      </div>
+
+                      {/* Power Block Interlock */}
+                      <div className="flex flex-col items-start min-w-[75px]">
+                        <span className="text-[10px] text-slate-500 uppercase">POWER BLK</span>
+                        {demand.power_block_required ? (
+                          <span className="px-1.5 py-0.2 rounded bg-amber-900/60 border border-amber-600 text-amber-300 text-[10px] font-bold">
+                            REQ
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.2 rounded bg-[#1f2838] border border-[#2d3a4f] text-slate-400 text-[10px]">
+                            OFF
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Signal Disconnection */}
+                      <div className="flex flex-col items-start min-w-[75px]">
+                        <span className="text-[10px] text-slate-500 uppercase">SIG DISC</span>
+                        {demand.signal_disconnection_required ? (
+                          <span className="px-1.5 py-0.2 rounded bg-emerald-900/60 border border-emerald-600 text-emerald-300 text-[10px] font-bold">
+                            REQ
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.2 rounded bg-[#1f2838] border border-[#2d3a4f] text-slate-400 text-[10px]">
+                            OFF
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Scheduled Window */}
+                      <div className="flex flex-col items-start min-w-[90px]">
+                        <span className="text-[10px] text-slate-500 uppercase">WINDOW</span>
+                        <div className="text-[10px] font-semibold text-slate-200">
+                          {block ? (
+                            <span>{formatTime(block.scheduled_start_min)} – {formatTime(block.scheduled_end_min)}</span>
+                          ) : (
+                            <span className="text-slate-500">Unscheduled</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </td>
 
-                  {/* Location */}
-                  <td className="px-4 py-3">
-                    <span className="text-slate-200">
-                      KM {demand.start_km.toFixed(1)} – {demand.end_km.toFixed(1)}
-                    </span>
-                    <p className="text-[10px] text-slate-500">
-                      Span: {Math.max(0.1, demand.end_km - demand.start_km).toFixed(1)} KM
-                    </p>
-                  </td>
-
-                  {/* Duration & Window */}
-                  <td className="px-4 py-3">
-                    <span className="text-slate-200 font-bold">{demand.duration_minutes} min</span>
-                    {block ? (
-                      <p className="text-[11px] text-cyan-400">
-                        {formatTime(block.scheduled_start_min)} → {formatTime(block.scheduled_end_min)}
-                      </p>
-                    ) : (
-                      <p className="text-[10px] text-slate-500">Awaiting Solver</p>
-                    )}
-                  </td>
-
-                  {/* Criticality Score Meter */}
-                  <td className="px-4 py-3">
-                    <div className="flex items-center space-x-2">
-                      {score >= 80 ? (
-                        <Flame className="h-3.5 w-3.5 text-rose-500 animate-pulse" />
-                      ) : score >= 60 ? (
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                    {/* Right: Operational Status Pill & Counter Badges */}
+                    <div className="flex items-center space-x-2.5 flex-shrink-0">
+                      {/* Operational Status Box */}
+                      {isAuthorized ? (
+                        <button
+                          onClick={() => onOpenHandshake(demand.id)}
+                          className="px-2.5 py-1 rounded border border-emerald-500 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/50 flex items-center space-x-1 font-mono text-[11px] font-semibold transition-colors"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mr-0.5" />
+                          <span>Authorized PTW</span>
+                          <ChevronRight className="w-3 h-3 text-emerald-400 ml-0.5" />
+                        </button>
+                      ) : isBundled ? (
+                        <button
+                          onClick={() => onOpenHandshake(demand.id)}
+                          className="px-2.5 py-1 rounded border border-indigo-500 bg-indigo-950/40 text-indigo-300 hover:bg-indigo-900/50 flex items-center space-x-1 font-mono text-[11px] font-semibold transition-colors"
+                        >
+                          <span>Integrated Joint</span>
+                          <ChevronRight className="w-3 h-3 text-indigo-400 ml-0.5" />
+                        </button>
+                      ) : isDegradedOrCritical ? (
+                        <button
+                          onClick={() => onOpenHandshake(demand.id)}
+                          className="px-2.5 py-1 rounded border border-amber-600 bg-amber-950/30 text-amber-300 hover:bg-amber-900/40 flex items-center space-x-1 font-mono text-[11px] font-semibold transition-colors"
+                        >
+                          <span>Critical Overdue</span>
+                          <ChevronRight className="w-3 h-3 text-amber-400 ml-0.5" />
+                        </button>
                       ) : (
-                        <span className="w-3.5" />
+                        <button
+                          onClick={() => onOpenHandshake(demand.id)}
+                          className="px-2.5 py-1 rounded border border-sky-600 bg-sky-950/30 text-sky-300 hover:bg-sky-900/40 flex items-center space-x-1 font-mono text-[11px] font-semibold transition-colors"
+                        >
+                          <span>Operational</span>
+                          <ChevronRight className="w-3 h-3 text-sky-400 ml-0.5" />
+                        </button>
                       )}
-                      <span
-                        className={`font-bold ${
-                          score >= 80
-                            ? 'text-rose-400'
-                            : score >= 60
-                            ? 'text-amber-400'
-                            : 'text-cyan-400'
-                        }`}
-                      >
-                        {score.toFixed(1)}
-                      </span>
-                    </div>
-                    {/* Visual Meter Bar */}
-                    <div className="w-20 bg-slate-800 h-1.5 rounded-full mt-1 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          score >= 80 ? 'bg-rose-500' : score >= 60 ? 'bg-amber-500' : 'bg-cyan-500'
-                        }`}
-                        style={{ width: `${Math.min(100, score)}%` }}
-                      />
-                    </div>
-                    <p className="text-[9px] text-slate-500 mt-0.5">
-                      {demand.urgency_days_overdue}d overdue • {demand.track_gmt} GMT
-                    </p>
-                  </td>
 
-                  {/* Bundling & Integration */}
-                  <td className="px-4 py-3">
-                    {isBundled ? (
-                      <div className="space-y-1">
-                        <span className="inline-flex items-center gap-1 rounded bg-purple-950/80 px-2 py-0.5 text-[10px] font-bold text-purple-300 border border-purple-800">
-                          <Layers className="h-3 w-3" />
-                          INTEGRATED BLOCK
+                      {/* Numeric Indicator Badges (matching screenshot's red/gray square boxes) */}
+                      <div className="flex items-center space-x-1 font-mono text-[10px]">
+                        {/* Conflicts Counter */}
+                        <span
+                          title="Train-Maintenance Conflicts: 0"
+                          className="w-6 h-6 rounded bg-[#1f293a] border border-[#304058] flex items-center justify-center text-slate-300 font-bold"
+                        >
+                          0
                         </span>
-                        {block?.bundled_with && block.bundled_with.length > 0 && (
-                          <p className="text-[10px] text-slate-400 truncate max-w-[130px]">
-                            With: {block.bundled_with.join(', ')}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-[10px] text-slate-500">Standalone</span>
-                    )}
-                  </td>
 
-                  {/* Status */}
-                  <td className="px-4 py-3">
-                    {isAuthorized ? (
-                      <div className="space-y-0.5">
-                        <span className="inline-flex items-center gap-1 rounded bg-emerald-950/80 px-2 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-800">
-                          <ShieldCheck className="h-3 w-3" />
-                          AUTHORIZED
+                        {/* Joint Bundled Items Counter */}
+                        <span
+                          title={isBundled ? `${block?.bundled_with.length} Joint Bundled Demands` : '0 Bundled Peers'}
+                          className={`w-6 h-6 rounded border flex items-center justify-center font-bold ${
+                            isBundled
+                              ? 'bg-indigo-950/90 border-indigo-500 text-indigo-300'
+                              : 'bg-[#1f293a] border-[#304058] text-slate-400'
+                          }`}
+                        >
+                          {isBundled ? (block?.bundled_with.length || 1) : 0}
                         </span>
-                        {block?.system_private_number && (
-                          <p className="text-[9px] text-emerald-400 font-mono">
-                            {block.system_private_number}
-                          </p>
-                        )}
-                      </div>
-                    ) : block ? (
-                      <span className="inline-flex items-center rounded bg-cyan-950/80 px-2 py-0.5 text-[10px] font-bold text-cyan-300 border border-cyan-800">
-                        SCHEDULED
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center rounded bg-slate-800 px-2 py-0.5 text-[10px] font-medium text-slate-400">
-                        PENDING
-                      </span>
-                    )}
-                  </td>
 
-                  {/* Action */}
-                  <td className="px-4 py-3 text-right">
-                    {isAuthorized ? (
+                        {/* Critical Severity Level */}
+                        <span
+                          title={`DCS Criticality Score: ${demand.criticality_score || 80}/100`}
+                          className={`w-6 h-6 rounded border flex items-center justify-center font-bold ${
+                            isDegradedOrCritical
+                              ? 'bg-rose-950/90 border-rose-600 text-rose-300'
+                              : 'bg-[#1f293a] border-[#304058] text-slate-400'
+                          }`}
+                        >
+                          {demand.severity === 'CRITICAL' ? 'C' : demand.severity === 'URGENT' ? 'U' : 'R'}
+                        </span>
+                      </div>
+
+                      {/* Expand / Collapse Button */}
                       <button
-                        onClick={() => onOpenHandshake(demand.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 hover:bg-slate-750 border border-emerald-500/30 text-[11px] font-medium transition-all"
+                        onClick={() => setExpandedId(isExpanded ? null : demand.id)}
+                        className="p-1 text-slate-400 hover:text-slate-200 transition-colors"
                       >
-                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                        <span>View Token</span>
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        />
                       </button>
-                    ) : (
-                      <button
-                        onClick={() => onOpenHandshake(demand.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500 text-[11px] font-bold shadow-md shadow-purple-950 transition-all active:scale-95"
-                      >
-                        <span>Grant PTW</span>
-                        <ArrowRight className="h-3 w-3" />
-                      </button>
-                    )}
-                  </td>
-                </tr>
+                    </div>
+                  </div>
+
+                  {/* Expanded Detail View */}
+                  {isExpanded && (
+                    <div className="px-6 py-3 bg-[#10151f] border-t border-[#222e40] text-xs font-mono text-slate-300 grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <div className="text-[10px] text-slate-500 uppercase font-semibold">
+                          Asset & Work Scope
+                        </div>
+                        <div className="text-slate-200 mt-0.5">{demand.asset_type}</div>
+                        <div className="text-[11px] text-slate-400">
+                          Activity: {demand.activity}
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          Spatial Span: KM {demand.start_km.toFixed(1)} to KM {demand.end_km.toFixed(1)}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[10px] text-slate-500 uppercase font-semibold">
+                          Safety & Interlock Directives
+                        </div>
+                        <div className="mt-0.5 flex flex-col space-y-0.5 text-[11px]">
+                          <div>
+                            Traction Power Block:{' '}
+                            <span className={demand.power_block_required ? 'text-amber-400 font-bold' : 'text-slate-400'}>
+                              {demand.power_block_required ? 'MANDATORY (TPC PN Required)' : 'NOT REQUIRED'}
+                            </span>
+                          </div>
+                          <div>
+                            Signal Disconnection:{' '}
+                            <span className={demand.signal_disconnection_required ? 'text-emerald-400 font-bold' : 'text-slate-400'}>
+                              {demand.signal_disconnection_required ? 'MANDATORY (S&T Interlock)' : 'NOT REQUIRED'}
+                            </span>
+                          </div>
+                          <div>
+                            Overdue Days: <span className="text-slate-200">{demand.urgency_days_overdue} days</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col justify-between">
+                        <div>
+                          <div className="text-[10px] text-slate-500 uppercase font-semibold">
+                            G&SR PTW Status
+                          </div>
+                          <div className="mt-0.5 text-[11px]">
+                            {block?.system_private_number ? (
+                              <div className="text-emerald-400 font-bold">
+                                PN: {block.system_private_number} (PTW: {block.ptw_id})
+                              </div>
+                            ) : (
+                              <div className="text-amber-400">
+                                Pending Private Number Exchange
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-2 flex justify-end">
+                          <button
+                            onClick={() => onOpenHandshake(demand.id)}
+                            className="px-3 py-1 rounded bg-sky-700 hover:bg-sky-600 text-white text-xs font-sans font-semibold transition-colors"
+                          >
+                            Open Digital PTW Form
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
-            })}
-          </tbody>
-        </table>
+            })
+          )
+        ) : (
+          /* Trains Fleet Tab */
+          trains.map((train) => (
+            <div key={train.id} className="bg-[#151c27] hover:bg-[#18212e] px-4 py-2.5 flex items-center justify-between gap-3 text-xs transition-colors">
+              <div className="flex items-center space-x-3 min-w-[260px] lg:w-[320px]">
+                <div className="w-8 h-8 rounded-full bg-emerald-950/80 border border-emerald-600/80 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                  <TrainIcon className="w-4 h-4" />
+                </div>
+                <div className="truncate">
+                  <div className="font-bold text-slate-100 truncate">
+                    {train.id} • {train.name}
+                  </div>
+                  <div className="text-[11px] text-slate-400 font-mono truncate">
+                    {train.type.replace('_', ' ')} • Priority {train.priority}
+                  </div>
+                </div>
+              </div>
+
+              <div className="hidden sm:flex items-center space-x-6 text-[11px] font-mono text-slate-300 flex-1 justify-around px-2">
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase block">CORRIDOR</span>
+                  <span>KM {train.start_km} → {train.end_km}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase block">DEPARTURE</span>
+                  <span>{formatTime(train.dep_min)}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase block">ARRIVAL</span>
+                  <span>{formatTime(train.arr_min)}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase block">TRANSIT</span>
+                  <span>{train.arr_min - train.dep_min} min</span>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2.5">
+                <div className="px-2.5 py-1 rounded border border-emerald-500 bg-emerald-950/40 text-emerald-300 flex items-center space-x-1 font-mono text-[11px]">
+                  <span>Operational / On-Time</span>
+                  <ChevronRight className="w-3 h-3 text-emerald-400" />
+                </div>
+
+                <div className="flex items-center space-x-1 font-mono text-[10px]">
+                  <span className="w-6 h-6 rounded bg-[#1f293a] border border-[#304058] flex items-center justify-center text-slate-300 font-bold">
+                    0
+                  </span>
+                  <span className="w-6 h-6 rounded bg-[#1f293a] border border-[#304058] flex items-center justify-center text-slate-300 font-bold">
+                    0
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
