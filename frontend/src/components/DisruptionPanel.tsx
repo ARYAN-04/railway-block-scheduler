@@ -22,10 +22,14 @@ export const DisruptionPanel: React.FC<DisruptionPanelProps> = ({
   activeDisruption,
 }) => {
   const [selectedTrainId, setSelectedTrainId] = useState<string>(
-    trains[1]?.id || '12424' // Default to Rajdhani
+    activeDisruption?.train_id || trains[1]?.id || '12424'
   );
-  const [delayMinutes, setDelayMinutes] = useState<number>(45);
-  const [notes, setNotes] = useState<string>('Overhead wire snag / Speed restriction at Ghaziabad');
+  const [delayMinutes, setDelayMinutes] = useState<number>(
+    activeDisruption?.delay_minutes ?? 45
+  );
+  const [notes, setNotes] = useState<string>(
+    activeDisruption?.notes || 'Overhead wire snag / Speed restriction at Ghaziabad'
+  );
 
   const selectedTrain = trains.find((t) => t.id === selectedTrainId) || trains[0];
 
@@ -50,6 +54,13 @@ export const DisruptionPanel: React.FC<DisruptionPanelProps> = ({
     setNotes(noteText);
   };
 
+  const handleResetSchedule = async () => {
+    setSelectedTrainId(trains[1]?.id || '12424');
+    setDelayMinutes(45);
+    setNotes('Overhead wire snag / Speed restriction at Ghaziabad');
+    await onReset();
+  };
+
   return (
     <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden text-slate-800">
       {/* Header */}
@@ -63,12 +74,17 @@ export const DisruptionPanel: React.FC<DisruptionPanelProps> = ({
           </span>
         </div>
 
-        {activeDisruption && (
+        {activeDisruption ? (
           <div className="flex items-center space-x-2 text-[11px] font-mono text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-300">
             <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse"></span>
             <span className="font-semibold">
-              Active Delay: Train {activeDisruption.train_id} (+{activeDisruption.delay_minutes}m)
+              Active Disruption: Train {activeDisruption.train_id} (+{activeDisruption.delay_minutes}m)
             </span>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-1.5 text-[11px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+            <span className="font-semibold">Baseline Timetable Active</span>
           </div>
         )}
       </div>
@@ -181,7 +197,7 @@ export const DisruptionPanel: React.FC<DisruptionPanelProps> = ({
         {/* Actions */}
         <div className="flex items-center justify-end space-x-2 pt-1">
           <button
-            onClick={onReset}
+            onClick={handleResetSchedule}
             disabled={isLoading}
             className="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-xs font-semibold flex items-center space-x-1.5 transition-colors disabled:opacity-50"
           >
@@ -189,13 +205,24 @@ export const DisruptionPanel: React.FC<DisruptionPanelProps> = ({
             <span>Reset Baseline Schedule</span>
           </button>
 
+          {/* Dynamic Action Button: Changes between Inject Disruption and Trigger Adaptive Re-Planner */}
           <button
             onClick={handleSimulate}
             disabled={isLoading}
-            className="px-4 py-1.5 rounded bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center space-x-1.5 transition-colors disabled:opacity-50 shadow-sm"
+            className={`px-4 py-1.5 rounded font-bold text-xs flex items-center space-x-1.5 transition-colors disabled:opacity-50 shadow-sm text-white ${
+              activeDisruption
+                ? 'bg-blue-700 hover:bg-blue-800'
+                : 'bg-amber-600 hover:bg-amber-700'
+            }`}
           >
             <Play className="w-3.5 h-3.5 fill-current" />
-            <span>{isLoading ? 'Re-planning with CP-SAT...' : 'Trigger Adaptive Re-Planner'}</span>
+            <span>
+              {isLoading
+                ? 'Re-planning with CP-SAT...'
+                : activeDisruption
+                ? 'Trigger Adaptive Re-Planner'
+                : 'Inject Disruption'}
+            </span>
           </button>
         </div>
       </div>

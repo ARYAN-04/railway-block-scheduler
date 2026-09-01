@@ -380,6 +380,7 @@ export const App: React.FC = () => {
         {/* Disruption Simulator Drawer (Toggleable) */}
         {showDisruptionPanel && (
           <DisruptionPanel
+            key={activeDisruption ? `${activeDisruption.train_id}-${activeDisruption.delay_minutes}` : 'baseline'}
             trains={trains}
             onSimulate={handleSimulateDisruption}
             onReset={handleReset}
