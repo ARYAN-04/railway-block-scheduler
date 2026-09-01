@@ -220,7 +220,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
           <span className="text-slate-600">
             Ghaziabad – Aligarh Jn • 106.0 KM
           </span>
-          <span className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-[11px] font-mono font-semibold text-blue-800">
+          <span className="text-slate-500 font-mono text-xs font-semibold">
             {scheduledBlocks.length} Possessions Scheduled
           </span>
         </div>
@@ -629,15 +629,11 @@ export const GanttChart: React.FC<GanttChartProps> = ({
         {hoveredItem ? (
           <div className="flex flex-wrap items-center justify-between w-full gap-3">
             <div className="flex items-center space-x-3">
-              <div
-                className={`p-1.5 rounded ${
-                  hoveredItem.type === 'TRAIN'
-                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                    : 'bg-purple-100 text-purple-800 border border-purple-300'
-                }`}
-              >
-                <Info className="w-4 h-4" />
-              </div>
+              <span className={`w-12 h-6 rounded font-mono text-[10px] font-bold flex items-center justify-center flex-shrink-0 text-white ${
+                hoveredItem.type === 'TRAIN' ? 'bg-blue-800' : 'bg-purple-900'
+              }`}>
+                {hoveredItem.type === 'TRAIN' ? 'TRAIN' : 'BLOCK'}
+              </span>
               <div>
                 <div className="font-bold text-slate-900 flex items-center space-x-2">
                   <span>{hoveredItem.title}</span>

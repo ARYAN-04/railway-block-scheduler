@@ -4,8 +4,8 @@ import {
   Play,
   RotateCcw,
   Clock,
-  ChevronDown,
   HelpCircle,
+  BarChart2,
 } from 'lucide-react';
 import {
   getCorridor,
@@ -24,7 +24,7 @@ import type {
   ScheduledBlock,
   Train,
 } from './types';
-import { KPICards } from './components/KPICards';
+import { MetricsModal } from './components/MetricsModal';
 import { GanttChart } from './components/GanttChart';
 import { DemandTable } from './components/DemandTable';
 import { DisruptionPanel } from './components/DisruptionPanel';
@@ -57,6 +57,7 @@ export const App: React.FC = () => {
   const [activeDisruption, setActiveDisruption] = useState<DisruptionRequest | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [isHandshakeOpen, setIsHandshakeOpen] = useState(false);
+  const [isMetricsOpen, setIsMetricsOpen] = useState(false);
   const [showDisruptionPanel, setShowDisruptionPanel] = useState(false);
   const [currentTime, setCurrentTime] = useState<string>('');
 
@@ -193,13 +194,11 @@ export const App: React.FC = () => {
     <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans relative">
       {/* 1. Top Enterprise Header Bar (matching screenshot navbar) */}
       <header className="bg-slate-900 border-b border-slate-800 px-5 py-2.5 flex flex-wrap items-center justify-between sticky top-0 z-40 gap-3 text-xs text-white shadow-sm relative before:content-[''] before:absolute before:-top-96 before:left-0 before:right-0 before:h-96 before:bg-slate-900 before:pointer-events-none">
-        {/* Left: Brand Pill & Navigation Tabs */}
+        {/* Left: Brand & Navigation Tabs */}
         <div className="flex items-center space-x-4">
-          {/* Brand Pill matching screenshot */}
-          <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded bg-sky-600 text-white font-bold shadow-sm">
-            <TrainIcon className="w-4 h-4" />
-            <span className="tracking-wide uppercase">RAILSYNC — Operational</span>
-            <ChevronDown className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center space-x-2 px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-white font-bold shadow-sm">
+            <TrainIcon className="w-4 h-4 text-sky-400" />
+            <span className="tracking-wide font-mono text-xs uppercase">RAILSYNC // Operational</span>
           </div>
 
           {/* Navigation Links */}
@@ -208,7 +207,10 @@ export const App: React.FC = () => {
               Gantt Timeline
             </button>
             <button
-              onClick={() => {}}
+              onClick={() => {
+                const el = document.getElementById('fleet-section');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
               className="px-3 py-1 rounded text-slate-300 hover:text-white hover:bg-slate-800 transition-colors font-medium"
             >
               Fleet & Possessions
@@ -233,6 +235,13 @@ export const App: React.FC = () => {
             >
               Safety Handshake (G&SR)
             </button>
+            <button
+              onClick={() => setIsMetricsOpen(true)}
+              className="px-3 py-1 rounded text-slate-300 hover:text-white hover:bg-slate-800 transition-colors font-medium flex items-center space-x-1.5"
+            >
+              <BarChart2 className="w-3.5 h-3.5 text-sky-400" />
+              <span>Improvement Stats</span>
+            </button>
           </nav>
         </div>
 
@@ -252,7 +261,7 @@ export const App: React.FC = () => {
 
           {/* Controller Profile */}
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px] font-bold">
+            <div className="w-6 h-6 rounded bg-blue-700 text-white flex items-center justify-center text-[10px] font-bold font-mono">
               SC
             </div>
             <span className="hidden sm:inline text-[11px] font-mono text-slate-300 font-semibold">
@@ -270,11 +279,20 @@ export const App: React.FC = () => {
         </div>
       </header>
 
-      {/* 2. Operational Filter Toolbar (Directly mirrors reference screenshot filter strip in clean light theme) */}
-      <div className="bg-white border-b border-slate-300 px-5 py-2.5 text-xs shadow-sm">
-        <div className="flex flex-col space-y-2">
-          <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-            Real-time corridor possession status
+      {/* 2. Operational Filter Toolbar (Directly mirrors reference screenshot filter strip) */}
+      <div className="bg-white border-b border-slate-300 px-5 py-2 text-xs shadow-sm">
+        <div className="flex flex-col space-y-1.5">
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+              Real-time corridor possession status
+            </div>
+            <button
+              onClick={() => setIsMetricsOpen(true)}
+              className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-mono text-[11px] font-semibold flex items-center space-x-1 transition-colors"
+            >
+              <BarChart2 className="w-3.5 h-3.5 text-blue-700" />
+              <span>Improvement Stats (+{metrics.capacity_uptime_gained_percent.toFixed(1)}%)</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
@@ -375,7 +393,7 @@ export const App: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Main Dashboard Workspace */}
+      {/* 3. Main Dashboard Workspace (Gantt and Fleet are full-width operational priorities) */}
       <main className="flex-1 p-5 space-y-4 max-w-[1600px] w-full mx-auto">
         {/* Disruption Simulator Drawer (Toggleable) */}
         {showDisruptionPanel && (
@@ -389,10 +407,7 @@ export const App: React.FC = () => {
           />
         )}
 
-        {/* Operational Telemetry Metrics Ribbon */}
-        <KPICards metrics={metrics} />
-
-        {/* Core Timeline: Gantt Chart (Replaces Marey Chart) */}
+        {/* Core Timeline: Gantt Chart (Full view) */}
         <GanttChart
           trains={trains}
           scheduledBlocks={scheduledBlocks}
@@ -404,17 +419,19 @@ export const App: React.FC = () => {
           filterSegment={filterSegment}
         />
 
-        {/* High-Density Asset & Possession Fleet List (matching screenshot layout) */}
-        <DemandTable
-          demands={demands}
-          blocks={scheduledBlocks}
-          trains={trains}
-          onOpenHandshake={handleOpenHandshake}
-          selectedBlockId={selectedBlockId}
-          filterDepartment={filterDepartment}
-          filterStatus={filterBlockStatus}
-          searchQuery={searchQuery}
-        />
+        {/* High-Density Asset & Possession Fleet List */}
+        <div id="fleet-section">
+          <DemandTable
+            demands={demands}
+            blocks={scheduledBlocks}
+            trains={trains}
+            onOpenHandshake={handleOpenHandshake}
+            selectedBlockId={selectedBlockId}
+            filterDepartment={filterDepartment}
+            filterStatus={filterBlockStatus}
+            searchQuery={searchQuery}
+          />
+        </div>
       </main>
 
       {/* Safety Handshake Dialog (G&SR Rule 15.06 BDMS) */}
@@ -424,6 +441,13 @@ export const App: React.FC = () => {
         isOpen={isHandshakeOpen}
         onClose={() => setIsHandshakeOpen(false)}
         onGrantSuccess={handleGrantSuccess}
+      />
+
+      {/* On-Demand Improvement Stats & Optimization Telemetry Modal */}
+      <MetricsModal
+        isOpen={isMetricsOpen}
+        onClose={() => setIsMetricsOpen(false)}
+        metrics={metrics}
       />
     </div>
   );
