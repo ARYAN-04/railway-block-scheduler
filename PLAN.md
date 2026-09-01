@@ -145,7 +145,7 @@ graph TD
 ### Phase 3: Backend REST API & Safety Handshake Protocol
 **Goal:** Expose high-performance async endpoints and G&SR-compliant safety authorization tokens.
 
-- [ ] **Step 3.1: FastAPI Main Application (`backend/app/main.py`)**
+- [x] **Step 3.1: FastAPI Main Application (`backend/app/main.py`)**
   - Configure CORS middleware for local frontend development.
   - `GET /api/corridor`: Returns station metadata and corridor length.
   - `GET /api/trains`: Returns active timetable rakes.
@@ -153,9 +153,9 @@ graph TD
   - `POST /api/optimize`: Executes CP-SAT solver, stores scheduled state, returns scheduled blocks and efficiency metrics.
   - `POST /api/grant-safety-token`: Validates TPC private number, generates encrypted system Private Number (`PN-XXXXXX`), records Permit to Work (PTW) audit record.
   - `POST /api/disruption/simulate`: Injects train delay (e.g. $+45$ min on Rajdhani), triggers re-optimization, and returns schedule diff.
-- [ ] **Step 3.2: API Integration Tests (`backend/tests/test_api.py`)**
+- [x] **Step 3.2: API Integration Tests (`backend/tests/test_api.py`)**
   - Test full HTTP lifecycle with `TestClient(app)`.
-- [ ] **Verification Gate:**
+- [x] **Verification Gate:**
   - `uv run pytest backend/tests/test_api.py` passes.
   - `uv run uvicorn app.main:app --port 8000` responds accurately to curl requests.
 
