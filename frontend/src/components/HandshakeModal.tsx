@@ -76,19 +76,19 @@ export const HandshakeModal: React.FC<HandshakeModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-[#1a2230] border border-[#2d3a4f] rounded-lg shadow-xl w-full max-w-2xl text-slate-200 overflow-hidden font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="bg-white border border-slate-300 rounded-lg shadow-2xl w-full max-w-2xl text-slate-800 overflow-hidden font-sans">
         {/* Official Header */}
-        <div className="px-5 py-3.5 bg-[#141b26] border-b border-[#2d3a4f] flex items-center justify-between">
+        <div className="px-5 py-3.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded bg-[#1e293b] border border-[#3b4e6b] flex items-center justify-center text-sky-400">
+            <div className="w-8 h-8 rounded bg-blue-100 border border-blue-300 flex items-center justify-center text-blue-700">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-100 uppercase tracking-wider">
+              <div className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                 Ministry of Railways • Northern Railway
               </div>
-              <div className="text-[11px] text-slate-400 font-mono">
+              <div className="text-[11px] text-slate-600 font-mono">
                 BDMS Digital Safety Protocol (G&SR Rule 15.06)
               </div>
             </div>
@@ -96,96 +96,96 @@ export const HandshakeModal: React.FC<HandshakeModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1 rounded text-slate-400 hover:text-white hover:bg-[#27354a] transition-colors"
+            className="p-1 rounded text-slate-400 hover:text-slate-800 hover:bg-slate-200 transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
         <div className="p-5 space-y-4">
           {/* Target Possession Details Card */}
-          <div className="p-3.5 rounded bg-[#121822] border border-[#253246] text-xs font-mono space-y-2">
-            <div className="flex items-center justify-between border-b border-[#1e2738] pb-1.5">
-              <span className="font-bold text-slate-100">
+          <div className="p-3.5 rounded bg-slate-50 border border-slate-200 text-xs font-mono space-y-2">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+              <span className="font-bold text-slate-900">
                 {block.demand_id} • {block.activity}
               </span>
-              <span className="text-sky-300 font-semibold">
+              <span className="text-blue-700 font-bold">
                 {block.department} ({block.system})
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-slate-300">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-slate-700">
               <div>
-                <span className="text-slate-500 block text-[10px]">CORRIDOR SPAN</span>
-                <span>KM {block.start_km.toFixed(1)} – {block.end_km.toFixed(1)}</span>
+                <span className="text-slate-400 block text-[10px] font-bold">CORRIDOR SPAN</span>
+                <span className="font-bold text-slate-900">KM {block.start_km.toFixed(1)} – {block.end_km.toFixed(1)}</span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[10px]">SCHEDULED WINDOW</span>
-                <span>{formatTime(block.scheduled_start_min)} – {formatTime(block.scheduled_end_min)}</span>
+                <span className="text-slate-400 block text-[10px] font-bold">SCHEDULED WINDOW</span>
+                <span className="font-bold text-slate-900">{formatTime(block.scheduled_start_min)} – {formatTime(block.scheduled_end_min)}</span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[10px]">TOTAL DURATION</span>
-                <span>{block.duration_minutes} minutes</span>
+                <span className="text-slate-400 block text-[10px] font-bold">TOTAL DURATION</span>
+                <span className="font-bold text-slate-900">{block.duration_minutes} minutes</span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[10px]">CRITICALITY (DCS)</span>
-                <span>{block.criticality_score}/100</span>
+                <span className="text-slate-400 block text-[10px] font-bold">CRITICALITY (DCS)</span>
+                <span className="font-bold text-slate-900">{block.criticality_score}/100</span>
               </div>
             </div>
 
             {block.is_bundled && (
-              <div className="mt-1 pt-1.5 border-t border-[#1e2738] text-[11px] text-indigo-300 flex items-center space-x-1.5">
-                <span className="px-1.5 py-0.2 rounded bg-indigo-900 border border-indigo-500 font-bold text-[10px]">
+              <div className="mt-1 pt-1.5 border-t border-slate-200 text-[11px] text-purple-900 flex items-center space-x-1.5">
+                <span className="px-1.5 py-0.2 rounded bg-purple-100 border border-purple-300 font-bold text-[10px]">
                   INTEGRATED BLOCK
                 </span>
-                <span>Synchronized with: {block.bundled_with.join(', ')}</span>
+                <span className="font-semibold">Synchronized with: {block.bundled_with.join(', ')}</span>
               </div>
             )}
           </div>
 
           {/* If already granted or just granted */}
           {grantedData ? (
-            <div className="p-4 rounded bg-[#13221d] border border-emerald-600/60 text-slate-200 space-y-3 font-mono">
+            <div className="p-4 rounded bg-emerald-50 border border-emerald-300 text-slate-800 space-y-3 font-mono">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-emerald-400 font-bold text-xs">
-                  <CheckCircle2 className="w-4 h-4" />
+                <div className="flex items-center space-x-2 text-emerald-800 font-bold text-xs">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span>PERMIT TO WORK (PTW) OFFICIALLY ISSUED</span>
                 </div>
-                <span className="text-[10px] text-emerald-500 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-700">
+                <span className="text-[10px] text-emerald-900 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 font-bold">
                   G&SR 15.06 VERIFIED
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs border-t border-emerald-900/60">
-                <div className="p-2.5 rounded bg-[#0f1b16] border border-emerald-800/60">
-                  <span className="text-[10px] text-slate-400 uppercase block">System Private Number</span>
-                  <span className="text-base font-bold text-emerald-300 tracking-wider">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs border-t border-emerald-200">
+                <div className="p-2.5 rounded bg-white border border-emerald-300 shadow-sm">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold block">System Private Number</span>
+                  <span className="text-base font-black text-emerald-700 tracking-wider">
                     {grantedData.system_private_number}
                   </span>
                 </div>
-                <div className="p-2.5 rounded bg-[#0f1b16] border border-emerald-800/60">
-                  <span className="text-[10px] text-slate-400 uppercase block">Permit Reference (PTW ID)</span>
-                  <span className="text-sm font-semibold text-slate-200 truncate block">
+                <div className="p-2.5 rounded bg-white border border-emerald-300 shadow-sm">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold block">Permit Reference (PTW ID)</span>
+                  <span className="text-sm font-bold text-slate-900 truncate block">
                     {grantedData.ptw_id}
                   </span>
                 </div>
               </div>
 
-              <div className="text-[11px] text-slate-300">
-                Timestamp: {grantedData.ptw_timestamp} • Station Section: Dankaur / Khurja Controller
+              <div className="text-[11px] text-slate-600">
+                Timestamp: {grantedData.ptw_timestamp} • Section Controller: {sectionControllerId}
               </div>
             </div>
           ) : (
             /* Issuance Form */
             <form onSubmit={handleGrant} className="space-y-3 text-xs">
               {demand?.power_block_required && (
-                <div className="p-3 rounded bg-amber-950/40 border border-amber-600 text-amber-200 text-xs space-y-1">
-                  <div className="flex items-center space-x-1.5 font-bold">
-                    <Zap className="w-4 h-4 text-amber-400" />
+                <div className="p-3 rounded bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-1">
+                  <div className="flex items-center space-x-1.5 font-bold text-amber-900">
+                    <Zap className="w-4 h-4 text-amber-600" />
                     <span>TRACTION POWER BLOCK (OHE 25kV ISOLATION) MANDATORY</span>
                   </div>
-                  <p className="text-[11px] text-amber-300/90 font-mono">
+                  <p className="text-[11px] text-amber-900 font-mono">
                     Under G&SR Rule 15.06, Section Controller must exchange a Private Number with the Traction Power Controller (TPC) confirming de-energization before issuing PTW.
                   </p>
                 </div>
@@ -193,7 +193,7 @@ export const HandshakeModal: React.FC<HandshakeModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono">
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">
+                  <label className="block text-[11px] text-slate-600 font-bold mb-1">
                     Section Controller ID
                   </label>
                   <input
@@ -201,12 +201,12 @@ export const HandshakeModal: React.FC<HandshakeModalProps> = ({
                     required
                     value={sectionControllerId}
                     onChange={(e) => setSectionControllerId(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded bg-[#121822] border border-[#2d3a4f] text-slate-100 text-xs focus:outline-none focus:border-sky-500"
+                    className="w-full px-2.5 py-1.5 rounded bg-white border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-blue-600 shadow-sm font-bold"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">
+                  <label className="block text-[11px] text-slate-600 font-bold mb-1">
                     Depot Field Supervisor ID
                   </label>
                   <input
@@ -214,14 +214,14 @@ export const HandshakeModal: React.FC<HandshakeModalProps> = ({
                     required
                     value={depotSupervisorId}
                     onChange={(e) => setDepotSupervisorId(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded bg-[#121822] border border-[#2d3a4f] text-slate-100 text-xs focus:outline-none focus:border-sky-500"
+                    className="w-full px-2.5 py-1.5 rounded bg-white border border-slate-300 text-slate-900 text-xs focus:outline-none focus:border-blue-600 shadow-sm font-bold"
                   />
                 </div>
               </div>
 
               {demand?.power_block_required && (
                 <div className="font-mono">
-                  <label className="block text-[11px] text-amber-300 mb-1">
+                  <label className="block text-[11px] text-amber-900 font-bold mb-1">
                     TPC Private Number (Traction Power Controller)
                   </label>
                   <input
@@ -230,14 +230,14 @@ export const HandshakeModal: React.FC<HandshakeModalProps> = ({
                     value={tpcPrivateNumber}
                     onChange={(e) => setTpcPrivateNumber(e.target.value)}
                     placeholder="e.g. TPC-62841"
-                    className="w-full px-2.5 py-1.5 rounded bg-[#121822] border border-amber-600/70 text-amber-200 text-xs focus:outline-none focus:border-amber-400"
+                    className="w-full px-2.5 py-1.5 rounded bg-white border border-amber-400 text-amber-950 text-xs focus:outline-none focus:border-amber-600 shadow-sm font-bold"
                   />
                 </div>
               )}
 
               {errorMsg && (
-                <div className="p-2.5 rounded bg-rose-950/60 border border-rose-600 text-rose-300 text-xs flex items-center space-x-2 font-mono">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <div className="p-2.5 rounded bg-rose-50 border border-rose-300 text-rose-800 text-xs flex items-center space-x-2 font-mono">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
                   <span>{errorMsg}</span>
                 </div>
               )}
@@ -246,14 +246,14 @@ export const HandshakeModal: React.FC<HandshakeModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-3 py-1.5 rounded bg-[#202a3a] hover:bg-[#283549] text-slate-300 text-xs transition-colors"
+                  className="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-xs font-semibold transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-1.5 rounded bg-sky-700 hover:bg-sky-600 text-white font-semibold text-xs flex items-center space-x-1.5 transition-colors disabled:opacity-50"
+                  className="px-4 py-1.5 rounded bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs flex items-center space-x-1.5 transition-colors disabled:opacity-50 shadow-sm"
                 >
                   {isSubmitting ? (
                     <span>Validating & Issuing...</span>

@@ -161,62 +161,66 @@ export const GanttChart: React.FC<GanttChartProps> = ({
     });
   }, [scheduledBlocks, filterDepartment, filterSegment]);
 
-  // Helper to compute percentage position on Gantt track
+  // Percentage position on Gantt track with a 2% inner margin to avoid right edge clipping
   const getPositionPercent = (min: number): number => {
     const clamped = Math.max(startMin, Math.min(endMin, min));
-    return ((clamped - startMin) / totalSpan) * 100;
+    const raw = (clamped - startMin) / totalSpan;
+    // Keep within [1%, 98%] so boundary labels and bars never clip
+    return 1 + raw * 97;
   };
 
   const getWidthPercent = (start: number, end: number): number => {
     const clampedStart = Math.max(startMin, Math.min(endMin, start));
     const clampedEnd = Math.max(startMin, Math.min(endMin, end));
-    return Math.max(0.5, ((clampedEnd - clampedStart) / totalSpan) * 100);
+    const rawWidth = (clampedEnd - clampedStart) / totalSpan;
+    return Math.max(0.8, rawWidth * 97);
   };
 
   const isVisibleInWindow = (start: number, end: number): boolean => {
     return end > startMin && start < endMin;
   };
 
+  // High-saturation, high-contrast, easily distinguishable color classes
   const getDepartmentColorClass = (dept: string) => {
     switch (dept) {
       case 'ENGINEERING':
-        return 'bg-sky-700/80 border-sky-500 text-sky-100';
+        return 'bg-teal-700 text-white border-teal-800 hover:bg-teal-800';
       case 'TRACTION_TRD':
-        return 'bg-amber-700/80 border-amber-500 text-amber-100';
+        return 'bg-orange-600 text-white border-orange-700 hover:bg-orange-700';
       case 'SIGNAL_TELECOM':
-        return 'bg-emerald-700/80 border-emerald-500 text-emerald-100';
+        return 'bg-indigo-600 text-white border-indigo-700 hover:bg-indigo-700';
       default:
-        return 'bg-slate-700 border-slate-500 text-slate-100';
+        return 'bg-slate-700 text-white border-slate-800';
     }
   };
 
   const getTrainColorClass = (type: string) => {
     switch (type) {
       case 'PASSENGER_PREMIUM':
-        return 'bg-emerald-600/90 border-emerald-400 text-white';
+        return 'bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700';
       case 'PASSENGER_REGULAR':
-        return 'bg-sky-600/80 border-sky-400 text-white';
+        return 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700';
       case 'FREIGHT':
-        return 'bg-amber-600/80 border-amber-400 text-amber-50';
+        return 'bg-amber-600 text-white border-amber-700 hover:bg-amber-700';
       default:
-        return 'bg-slate-600 border-slate-400 text-white';
+        return 'bg-slate-600 text-white border-slate-700';
     }
   };
 
   return (
-    <div className="bg-[#1a2230] border border-[#2d3a4f] rounded-lg shadow-sm overflow-hidden text-slate-200">
+    <div className="bg-white border border-slate-300 rounded-lg shadow-sm overflow-hidden text-slate-900">
       {/* Chart Toolbar */}
-      <div className="px-4 py-2.5 bg-[#141b26] border-b border-[#2d3a4f] flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-1.5 font-semibold text-slate-200">
-            <Layers className="w-4 h-4 text-sky-400" />
+          <div className="flex items-center space-x-1.5 font-semibold text-slate-800">
+            <Layers className="w-4 h-4 text-blue-600" />
             <span>Corridor Possession & Traffic Gantt</span>
           </div>
-          <span className="text-slate-500">|</span>
-          <span className="text-slate-400">
+          <span className="text-slate-300">|</span>
+          <span className="text-slate-600">
             Ghaziabad – Aligarh Jn • 106.0 KM
           </span>
-          <span className="px-2 py-0.5 rounded bg-[#222e40] border border-[#31435d] text-[11px] font-mono text-sky-300">
+          <span className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-[11px] font-mono font-semibold text-blue-800">
             {scheduledBlocks.length} Possessions Scheduled
           </span>
         </div>
@@ -224,13 +228,13 @@ export const GanttChart: React.FC<GanttChartProps> = ({
         {/* Controls */}
         <div className="flex items-center space-x-2">
           {/* View Mode Toggle */}
-          <div className="inline-flex rounded border border-[#2d3a4f] bg-[#0f141c] p-0.5">
+          <div className="inline-flex rounded border border-slate-300 bg-slate-100 p-0.5">
             <button
               onClick={() => setViewMode('SEGMENT')}
               className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
                 viewMode === 'SEGMENT'
-                  ? 'bg-[#2a384e] text-slate-100 font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-slate-900 font-bold shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               By Track Segment
@@ -239,8 +243,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({
               onClick={() => setViewMode('DEPARTMENT')}
               className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
                 viewMode === 'DEPARTMENT'
-                  ? 'bg-[#2a384e] text-slate-100 font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-slate-900 font-bold shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               By Department
@@ -248,17 +252,17 @@ export const GanttChart: React.FC<GanttChartProps> = ({
           </div>
 
           {/* Zoom Toggle */}
-          <div className="inline-flex rounded border border-[#2d3a4f] bg-[#0f141c] p-0.5">
+          <div className="inline-flex rounded border border-slate-300 bg-slate-100 p-0.5">
             <button
               onClick={() => setZoomLevel('FULL')}
               title="View full 12-hour horizon (00:00 - 12:00)"
               className={`px-2 py-1 rounded text-[11px] flex items-center space-x-1 ${
                 zoomLevel === 'FULL'
-                  ? 'bg-[#2a384e] text-slate-100 font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-slate-900 font-bold shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Maximize2 className="w-3 h-3" />
+              <Maximize2 className="w-3 h-3 text-slate-700" />
               <span>12h Full</span>
             </button>
             <button
@@ -266,11 +270,11 @@ export const GanttChart: React.FC<GanttChartProps> = ({
               title="Focus on early-morning low-traffic window (02:00 - 08:00)"
               className={`px-2 py-1 rounded text-[11px] flex items-center space-x-1 ${
                 zoomLevel === 'VALLEY'
-                  ? 'bg-[#2a384e] text-slate-100 font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-slate-900 font-bold shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <ZoomIn className="w-3 h-3 text-emerald-400" />
+              <ZoomIn className="w-3 h-3 text-emerald-600" />
               <span>02:00–08:00 Window</span>
             </button>
           </div>
@@ -278,60 +282,60 @@ export const GanttChart: React.FC<GanttChartProps> = ({
       </div>
 
       {/* Legend Bar */}
-      <div className="px-4 py-1.5 bg-[#121822] border-b border-[#253246] flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-400">
+      <div className="px-4 py-2 bg-slate-100/70 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-[11px] text-slate-700">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>
-            <span>Premium Train (Rajdhani/Shatabdi)</span>
+            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-600 border border-emerald-700"></span>
+            <span className="font-medium">Premium Train (Rajdhani/Shatabdi)</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-sky-500"></span>
-            <span>Regular Passenger Express</span>
+            <span className="w-2.5 h-2.5 rounded-sm bg-blue-600 border border-blue-700"></span>
+            <span className="font-medium">Regular Passenger Express</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-amber-500"></span>
-            <span>Freight Rake</span>
+            <span className="w-2.5 h-2.5 rounded-sm bg-amber-600 border border-amber-700"></span>
+            <span className="font-medium">Freight Rake</span>
           </div>
-          <span className="text-slate-600">•</span>
+          <span className="text-slate-300">•</span>
           <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-sky-700 border border-sky-400"></span>
-            <span>TMS Engineering</span>
-          </div>
-          <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-amber-700 border border-amber-400"></span>
-            <span>TDMS Electrical/OHE</span>
+            <span className="w-2.5 h-2.5 rounded-sm bg-teal-700 border border-teal-800"></span>
+            <span className="font-medium">TMS Engineering</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-emerald-700 border border-emerald-400"></span>
-            <span>SMMS S&T</span>
+            <span className="w-2.5 h-2.5 rounded-sm bg-orange-600 border border-orange-700"></span>
+            <span className="font-medium">TDMS Electrical/OHE</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <span className="w-3.5 h-2.5 rounded-sm bg-indigo-900 border-2 border-indigo-400 ring-1 ring-indigo-400"></span>
-            <span className="text-indigo-300 font-semibold">Integrated Joint Possession</span>
+            <span className="w-2.5 h-2.5 rounded-sm bg-indigo-600 border border-indigo-700"></span>
+            <span className="font-medium">SMMS S&T</span>
+          </div>
+          <div className="flex items-center space-x-1.5">
+            <span className="w-3.5 h-2.5 rounded-sm bg-purple-800 border border-purple-950"></span>
+            <span className="text-purple-900 font-bold">Integrated Joint Possession</span>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 text-[10px] text-slate-400">
+        <div className="flex items-center space-x-2 text-[10px] text-slate-600 font-medium">
           <span className="flex items-center space-x-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>Collision-Free Guarantee Active</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+            <span>Collision-Free Verification Active</span>
           </span>
         </div>
       </div>
 
-      {/* Main Gantt Grid */}
+      {/* Main Gantt Grid Container with Smooth Scrollbar & Sticky Left Lane */}
       <div className="overflow-x-auto relative">
-        <div className="min-w-[860px]">
+        <div className="min-w-[1020px]">
           {/* Timeline Header Row */}
-          <div className="flex border-b border-[#2d3a4f] bg-[#141b26] sticky top-0 z-10">
-            {/* Left Header Label */}
-            <div className="w-64 flex-shrink-0 px-3 py-2 border-r border-[#2d3a4f] text-[11px] font-semibold text-slate-400 flex items-center justify-between">
+          <div className="flex border-b border-slate-300 bg-slate-50 sticky top-0 z-20">
+            {/* Sticky Left Column Header */}
+            <div className="w-64 flex-shrink-0 px-3 py-2 bg-slate-50 border-r border-slate-300 text-[11px] font-bold text-slate-700 flex items-center justify-between sticky left-0 z-30 shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
               <span>Corridor Division & Schedule</span>
-              <Clock className="w-3.5 h-3.5 text-slate-500" />
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
             </div>
 
-            {/* Time Ticks */}
-            <div className="flex-1 relative h-9">
+            {/* Time Ticks Across Track */}
+            <div className="flex-1 relative h-9 pr-6">
               {hourMarks.map((m) => {
                 const leftPercent = getPositionPercent(m);
                 return (
@@ -340,8 +344,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                     className="absolute top-0 bottom-0 flex flex-col justify-between"
                     style={{ left: `${leftPercent}%` }}
                   >
-                    <div className="h-2 w-px bg-[#3b4c68]"></div>
-                    <span className="text-[10px] font-mono text-slate-400 -translate-x-1/2 pb-1 select-none">
+                    <div className="h-2 w-px bg-slate-400"></div>
+                    <span className="text-[10px] font-mono font-semibold text-slate-600 -translate-x-1/2 pb-1 select-none">
                       {formatMinutesToTime(m)}
                     </span>
                   </div>
@@ -352,7 +356,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
 
           {/* Segment-Based View */}
           {viewMode === 'SEGMENT' && (
-            <div className="divide-y divide-[#253246]">
+            <div className="divide-y divide-slate-200">
               {SEGMENTS.filter((seg) => filterSegment === 'ALL' || filterSegment === seg.id).map(
                 (segment) => {
                   // Trains in this segment
@@ -370,34 +374,37 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                   });
 
                   return (
-                    <div key={segment.id} className="bg-[#17202d] hover:bg-[#192332] transition-colors">
+                    <div key={segment.id} className="bg-white hover:bg-slate-50/50 transition-colors">
                       {/* Segment Title & Station Chainage */}
-                      <div className="flex items-center bg-[#131a24] px-3 py-1.5 border-b border-[#222e40] text-xs">
-                        <div className="w-64 flex-shrink-0 flex items-center space-x-2">
-                          <span className="font-semibold text-slate-100">{segment.name}</span>
+                      <div className="flex items-center bg-slate-100/90 px-3 py-1.5 border-b border-slate-200 text-xs">
+                        <div className="w-64 flex-shrink-0 sticky left-0 z-10 bg-slate-100/90 flex items-center space-x-2">
+                          <span className="font-bold text-slate-900">{segment.name}</span>
                         </div>
-                        <div className="flex-1 flex items-center justify-between text-[11px] text-slate-400 px-2">
+                        <div className="flex-1 flex items-center justify-between text-[11px] text-slate-600 px-2 pr-6">
                           <span className="font-mono text-slate-500">{segment.stations}</span>
-                          <span className="text-slate-400 font-mono text-[10px]">
+                          <span className="text-slate-600 font-mono text-[10px] font-semibold">
                             KM {segment.startKm.toFixed(1)} – {segment.endKm.toFixed(1)}
                           </span>
                         </div>
                       </div>
 
                       {/* Lane 1: Train Traffic (COA Timetable) */}
-                      <div className="flex items-stretch border-b border-[#202b3c] min-h-[38px]">
-                        <div className="w-64 flex-shrink-0 px-3 py-1.5 border-r border-[#2d3a4f] bg-[#141b26]/50 flex items-center justify-between">
-                          <div className="text-[11px] text-slate-300 font-medium">Train Traffic (COA)</div>
-                          <span className="text-[10px] text-slate-500 font-mono">
+                      <div className="flex items-stretch border-b border-slate-200 min-h-[40px]">
+                        {/* Sticky left lane title */}
+                        <div className="w-64 flex-shrink-0 px-3 py-1.5 bg-slate-50 border-r border-slate-300 flex items-center justify-between sticky left-0 z-10 shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
+                          <div className="text-[11px] text-slate-800 font-semibold">Train Traffic (COA)</div>
+                          <span className="text-[10px] text-slate-500 font-mono font-medium">
                             {segTrains.length} rakes
                           </span>
                         </div>
-                        <div className="flex-1 relative h-10 bg-[#111721]">
+
+                        {/* Track area */}
+                        <div className="flex-1 relative h-10 bg-white pr-6">
                           {/* Hour background guide lines */}
                           {hourMarks.map((m) => (
                             <div
                               key={m}
-                              className="absolute top-0 bottom-0 w-px bg-[#1d2737] pointer-events-none"
+                              className="absolute top-0 bottom-0 w-px bg-slate-200 pointer-events-none"
                               style={{ left: `${getPositionPercent(m)}%` }}
                             />
                           ))}
@@ -411,7 +418,6 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                             return (
                               <div
                                 key={`${to.train.id}-${segment.id}`}
-                                onClick={() => {}}
                                 onMouseEnter={() =>
                                   setHoveredItem({
                                     type: 'TRAIN',
@@ -429,7 +435,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                                   })
                                 }
                                 onMouseLeave={() => setHoveredItem(null)}
-                                className={`absolute top-1.5 bottom-1.5 rounded px-1.5 flex items-center overflow-hidden cursor-pointer border text-[10px] font-mono shadow-sm transition-transform hover:scale-[1.02] hover:z-20 ${colorClass}`}
+                                className={`absolute top-1.5 bottom-1.5 rounded px-2 flex items-center overflow-hidden cursor-pointer border text-[10px] font-mono shadow-sm transition-colors hover:ring-2 hover:ring-slate-900 ${colorClass}`}
                                 style={{
                                   left: `${left}%`,
                                   width: `${width}%`,
@@ -445,19 +451,22 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                       </div>
 
                       {/* Lane 2: Maintenance Possessions (ABPS Scheduled) */}
-                      <div className="flex items-stretch min-h-[44px]">
-                        <div className="w-64 flex-shrink-0 px-3 py-1.5 border-r border-[#2d3a4f] bg-[#141b26]/50 flex items-center justify-between">
-                          <div className="text-[11px] text-slate-300 font-medium">Possessions (ABPS)</div>
-                          <span className="text-[10px] text-slate-500 font-mono">
+                      <div className="flex items-stretch min-h-[46px]">
+                        {/* Sticky left lane title */}
+                        <div className="w-64 flex-shrink-0 px-3 py-1.5 bg-slate-50 border-r border-slate-300 flex items-center justify-between sticky left-0 z-10 shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
+                          <div className="text-[11px] text-slate-800 font-semibold">Possessions (ABPS)</div>
+                          <span className="text-[10px] text-slate-500 font-mono font-medium">
                             {segBlocks.length} blocks
                           </span>
                         </div>
-                        <div className="flex-1 relative h-11 bg-[#141c27]">
+
+                        {/* Track area */}
+                        <div className="flex-1 relative h-11 bg-slate-50/40 pr-6">
                           {/* Hour background guide lines */}
                           {hourMarks.map((m) => (
                             <div
                               key={m}
-                              className="absolute top-0 bottom-0 w-px bg-[#1d2737] pointer-events-none"
+                              className="absolute top-0 bottom-0 w-px bg-slate-200 pointer-events-none"
                               style={{ left: `${getPositionPercent(m)}%` }}
                             />
                           ))}
@@ -474,7 +483,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                             const isAuthorized = block.status === 'AUTHORIZED';
 
                             const baseClass = isBundled
-                              ? 'bg-indigo-950/90 border-2 border-indigo-400 text-indigo-100 shadow-md'
+                              ? 'bg-purple-800 text-white border-2 border-purple-950 shadow-md hover:bg-purple-900'
                               : getDepartmentColorClass(block.department);
 
                             return (
@@ -504,8 +513,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                                   });
                                 }}
                                 onMouseLeave={() => setHoveredItem(null)}
-                                className={`absolute top-1.5 bottom-1.5 rounded px-2 flex items-center justify-between overflow-hidden cursor-pointer border text-[10px] font-sans transition-all hover:z-20 ${baseClass} ${
-                                  isSelected ? 'ring-2 ring-white scale-[1.03] z-30' : ''
+                                className={`absolute top-1.5 bottom-1.5 rounded px-2 flex items-center justify-between overflow-hidden cursor-pointer border text-[10px] font-sans shadow-sm transition-colors hover:ring-2 hover:ring-slate-900 ${baseClass} ${
+                                  isSelected ? 'ring-2 ring-blue-600 z-10' : ''
                                 }`}
                                 style={{
                                   left: `${left}%`,
@@ -514,22 +523,22 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                               >
                                 <div className="flex items-center space-x-1.5 truncate">
                                   {isBundled && (
-                                    <span className="px-1 py-0.2 rounded bg-indigo-500 text-white font-bold text-[9px] uppercase tracking-wider">
+                                    <span className="px-1 py-0.2 rounded bg-white text-purple-900 font-extrabold text-[9px] uppercase tracking-wider">
                                       JOINT
                                     </span>
                                   )}
-                                  <span className="font-semibold truncate">
+                                  <span className="font-bold truncate">
                                     {block.demand_id}: {block.activity}
                                   </span>
                                 </div>
 
                                 <div className="flex items-center space-x-1 flex-shrink-0 ml-1">
                                   {isAuthorized ? (
-                                    <span className="px-1 py-0.2 rounded bg-emerald-500/90 text-white font-mono font-bold text-[9px]">
+                                    <span className="px-1 py-0.2 rounded bg-emerald-400 text-emerald-950 font-mono font-bold text-[9px]">
                                       PTW
                                     </span>
                                   ) : (
-                                    <span className="font-mono text-[9px] text-slate-300">
+                                    <span className="font-mono text-[9px] opacity-90">
                                       {block.duration_minutes}m
                                     </span>
                                   )}
@@ -548,15 +557,15 @@ export const GanttChart: React.FC<GanttChartProps> = ({
 
           {/* Department-Based View */}
           {viewMode === 'DEPARTMENT' && (
-            <div className="divide-y divide-[#253246]">
+            <div className="divide-y divide-slate-200">
               {['ENGINEERING', 'TRACTION_TRD', 'SIGNAL_TELECOM'].map((dept) => {
                 const deptBlocks = visibleBlocks.filter((b) => b.department === dept);
 
                 return (
-                  <div key={dept} className="flex items-stretch min-h-[48px] bg-[#17202d] hover:bg-[#192332]">
-                    <div className="w-64 flex-shrink-0 px-3 py-2 border-r border-[#2d3a4f] bg-[#141b26]/60 flex flex-col justify-center">
-                      <div className="text-xs font-semibold text-slate-200">{dept}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">
+                  <div key={dept} className="flex items-stretch min-h-[48px] bg-white hover:bg-slate-50">
+                    <div className="w-64 flex-shrink-0 px-3 py-2 bg-slate-50 border-r border-slate-300 flex flex-col justify-center sticky left-0 z-10 shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
+                      <div className="text-xs font-bold text-slate-800">{dept}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">
                         {dept === 'ENGINEERING'
                           ? 'TMS Track Maintenance'
                           : dept === 'TRACTION_TRD'
@@ -565,11 +574,11 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex-1 relative h-12 bg-[#121822]">
+                    <div className="flex-1 relative h-12 bg-white pr-6">
                       {hourMarks.map((m) => (
                         <div
                           key={m}
-                          className="absolute top-0 bottom-0 w-px bg-[#1d2737] pointer-events-none"
+                          className="absolute top-0 bottom-0 w-px bg-slate-200 pointer-events-none"
                           style={{ left: `${getPositionPercent(m)}%` }}
                         />
                       ))}
@@ -589,17 +598,17 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                             onClick={() => onSelectBlock(block.demand_id)}
                             className={`absolute top-2 bottom-2 rounded px-2 flex items-center justify-between cursor-pointer border text-[10px] ${getDepartmentColorClass(
                               block.department
-                            )} ${isSelected ? 'ring-2 ring-white z-30' : ''}`}
+                            )} ${isSelected ? 'ring-2 ring-blue-600 z-10' : ''}`}
                             style={{
                               left: `${left}%`,
                               width: `${width}%`,
                             }}
                           >
-                            <span className="font-semibold truncate">
+                            <span className="font-bold truncate">
                               {block.demand_id} ({block.duration_minutes}m)
                             </span>
                             {isBundled && (
-                              <span className="ml-1 text-[9px] bg-indigo-500 text-white px-1 rounded font-bold">
+                              <span className="ml-1 text-[9px] bg-white text-purple-900 px-1 rounded font-extrabold">
                                 JOINT
                               </span>
                             )}
@@ -615,40 +624,49 @@ export const GanttChart: React.FC<GanttChartProps> = ({
         </div>
       </div>
 
-      {/* Hover Inspection Inspector Drawer */}
-      {hoveredItem && (
-        <div className="p-3 bg-[#111722] border-t border-[#2d3a4f] flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center space-x-3">
-            <div
-              className={`p-1.5 rounded ${
-                hoveredItem.type === 'TRAIN'
-                  ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                  : 'bg-indigo-950 text-indigo-400 border border-indigo-800'
-              }`}
-            >
-              <Info className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="font-semibold text-slate-100 flex items-center space-x-2">
-                <span>{hoveredItem.title}</span>
-                <span className="text-slate-400 font-normal">({hoveredItem.subtitle})</span>
+      {/* Persistent Fixed-Height Inspection Dock: Eliminates Stutter and Layout Jumps completely */}
+      <div className="min-h-[52px] px-4 py-2.5 bg-slate-50 border-t border-slate-300 flex items-center justify-between text-xs">
+        {hoveredItem ? (
+          <div className="flex flex-wrap items-center justify-between w-full gap-3">
+            <div className="flex items-center space-x-3">
+              <div
+                className={`p-1.5 rounded ${
+                  hoveredItem.type === 'TRAIN'
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : 'bg-purple-100 text-purple-800 border border-purple-300'
+                }`}
+              >
+                <Info className="w-4 h-4" />
               </div>
-              <div className="text-[11px] text-slate-400 font-mono">
-                Window: {hoveredItem.startTime} – {hoveredItem.endTime} ({hoveredItem.duration} min)
+              <div>
+                <div className="font-bold text-slate-900 flex items-center space-x-2">
+                  <span>{hoveredItem.title}</span>
+                  <span className="text-slate-500 font-normal">({hoveredItem.subtitle})</span>
+                </div>
+                <div className="text-[11px] text-slate-600 font-mono">
+                  Window: {hoveredItem.startTime} – {hoveredItem.endTime} ({hoveredItem.duration} min)
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center space-x-4 text-[11px] font-mono text-slate-300">
-            {Object.entries(hoveredItem.details).map(([k, v]) => (
-              <div key={k} className="flex items-center space-x-1.5">
-                <span className="text-slate-500">{k}:</span>
-                <span className="text-slate-200 font-semibold">{v}</span>
-              </div>
-            ))}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-slate-700">
+              {Object.entries(hoveredItem.details).map(([k, v]) => (
+                <div key={k} className="flex items-center space-x-1">
+                  <span className="text-slate-500">{k}:</span>
+                  <span className="text-slate-900 font-bold">{v}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="flex items-center space-x-2 text-slate-500 text-[11px]">
+            <Info className="w-4 h-4 text-slate-400" />
+            <span>
+              Hover over any train or possession block to inspect live clearance, speed, and safety parameters. Click any possession to initiate G&SR Rule 15.06 PTW Handshake.
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
