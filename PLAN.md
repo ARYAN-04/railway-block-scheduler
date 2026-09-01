@@ -81,15 +81,15 @@ graph TD
 ### Phase 0: Environment & Workspace Scaffolding (Day 1 MVP Baseline)
 **Goal:** Initialize independent, reproducible backend (`uv`) and frontend (`pnpm`) workspaces matching developer standards.
 
-- [ ] **Step 0.1: Initialize Backend Workspace (`backend/`)**
+- [x] **Step 0.1: Initialize Backend Workspace (`backend/`)**
   - Create `backend/` directory.
   - Initialize project with `uv init backend --app`.
   - Add core dependencies: `fastapi`, `uvicorn[standard]`, `pydantic>=2.6.0`, `ortools>=9.9`, `pandas>=2.2.0`, `scikit-learn>=1.4.0`, `pytest`, `httpx`.
-- [ ] **Step 0.2: Initialize Frontend Workspace (`frontend/`)**
+- [x] **Step 0.2: Initialize Frontend Workspace (`frontend/`)**
   - Scaffold React 18+ TypeScript application via `pnpm create vite frontend --template react-ts`.
   - Install dependencies: `@tanstack/react-query`, `@tanstack/react-table`, `lucide-react`, `tailwindcss`, `postcss`, `autoprefixer`.
   - Configure Tailwind CSS (`tailwind.config.js`, `postcss.config.js`, `src/index.css`) with high-density control-room theme (slate-950/900 palette, cyan/emerald accents).
-- [ ] **Verification Gate:**
+- [x] **Verification Gate:**
   - `cd backend && uv run pytest` runs clean.
   - `cd frontend && pnpm build` passes with zero TypeScript/CSS errors.
 
@@ -98,20 +98,20 @@ graph TD
 ### Phase 1: Shared Domain Schemas & Synthetic Corridor Datasets
 **Goal:** Establish single-source-of-truth data models and realistic Indian Railways operational fixtures.
 
-- [ ] **Step 1.1: Backend Pydantic Schemas (`backend/app/schemas.py`)**
+- [x] **Step 1.1: Backend Pydantic Schemas (`backend/app/schemas.py`)**
   - Define `Station`: `id`, `name`, `km`.
   - Define `Train`: `id`, `name`, `type` (`PASSENGER_PREMIUM`, `PASSENGER_REGULAR`, `FREIGHT`), `start_km`, `end_km`, `dep_min`, `arr_min`, `priority`.
   - Define `MaintenanceDemand`: `id`, `department` (`ENGINEERING`, `TRACTION_TRD`, `SIGNAL_TELECOM`), `system` (`TMS`, `TDMS`, `SMMS`), `asset_type`, `activity`, `start_km`, `end_km`, `duration_minutes`, `urgency_days_overdue`, `track_gmt`, `severity` (`CRITICAL`, `URGENT`, `ROUTINE`), `power_block_required`, `signal_disconnection_required`.
   - Define `ScheduledBlock`: `demand_id`, `department`, `system`, `activity`, `start_km`, `end_km`, `scheduled_start_min`, `scheduled_end_min`, `duration_minutes`, `criticality_score`, `is_bundled`, `bundled_with`, `status`.
   - Define `OptimizationMetrics`: `uncoordinated_closure_hours`, `optimized_closure_hours`, `capacity_uptime_gained_percent`, `integrated_blocks_created`, `train_cancellations`.
   - Define `GrantBlockRequest` and `GrantBlockResponse`: `block_id`, `section_controller_id`, `tpc_private_number`, `depot_supervisor_id`, `system_private_number`, `ptw_id`, `ptw_timestamp`.
-- [ ] **Step 1.2: Synthetic Fixtures Generator (`backend/app/data_mock.py`)**
+- [x] **Step 1.2: Synthetic Fixtures Generator (`backend/app/data_mock.py`)**
   - Corridor: Ghaziabad Jn (0.0 KM) to Aligarh Jn (106.0 KM) with 9 intermediate stations (Dadri, Boraki, Ajaibpur, Dankaur, Wair, Khurja Jn, Somna, Aligarh Jn).
   - Train Timetable: Lucknow Shatabdi (12004), Dibrugarh Rajdhani (12424), Unchahar Express (14218), Bihar Sampark Kranti (12566), Dadri Thermal Coal rake, Mathura POL Feeder freight rake.
   - Cross-Departmental Demands: TMS Plain Track Tamping (CSM), TDMS Cantilever & OHE wire overhaul, SMMS Point Machine Replacement at Dankaur, TMS USFD flaw removal at Khurja.
-- [ ] **Step 1.3: Frontend TypeScript Types (`frontend/src/types.ts`)**
+- [x] **Step 1.3: Frontend TypeScript Types (`frontend/src/types.ts`)**
   - Mirror all backend Pydantic schemas in strict TypeScript interfaces.
-- [ ] **Verification Gate:**
+- [x] **Verification Gate:**
   - Automated Python schema roundtrip tests in `backend/tests/test_schemas.py`.
 
 ---
@@ -119,12 +119,12 @@ graph TD
 ### Phase 2: Core Optimization Engine (Google OR-Tools CP-SAT)
 **Goal:** Implement the multi-objective discrete solver that schedules conflicts and creates Integrated & Shadow blocks.
 
-- [ ] **Step 2.1: Defect Criticality Scoring (`backend/app/ml_scorer.py` / `optimizer.py`)**
+- [x] **Step 2.1: Defect Criticality Scoring (`backend/app/ml_scorer.py` / `optimizer.py`)**
   - Implement dynamic calculation and scoring rule ($1 \le DCS_m \le 100$):
     - Base severity score (`CRITICAL` = 70, `URGENT` = 50, `ROUTINE` = 30).
     - Overdue penalty $+ 2 \times \min(10, \text{days\_overdue})$.
     - High-density track GMT penalty $+ \min(10, \lfloor \text{GMT} / 10 \rfloor)$.
-- [ ] **Step 2.2: CP-SAT Optimization Engine (`backend/app/optimizer.py`)**
+- [x] **Step 2.2: CP-SAT Optimization Engine (`backend/app/optimizer.py`)**
   - Model initialization: `cp_model.CpModel()`.
   - Interval variable creation for demands.
   - Spatial discretization into track segments ($0-30$, $30-60$, $60-106$ KM).
@@ -133,11 +133,11 @@ graph TD
   - Cross-department bundling incentive terms ($b_{m_1, m_2} \in \{0, 1\}$ within 15 min window).
   - Objective function maximization.
   - Post-processing: calculate corridor closure hours, capacity uptime gained, integrated block identification.
-- [ ] **Step 2.3: Unit Tests (`backend/tests/test_optimizer.py`)**
+- [x] **Step 2.3: Unit Tests (`backend/tests/test_optimizer.py`)**
   - Test case: Solves within $<500$ ms.
   - Test case: No train trajectory overlaps with maintenance intervals on identical segments.
   - Test case: Correctly identifies and tags bundled joint blocks (e.g. TMS-001 + TDMS-002 at Dankaur).
-- [ ] **Verification Gate:**
+- [x] **Verification Gate:**
   - `uv run pytest backend/tests/test_optimizer.py -v` passes with all assertions green.
 
 ---
@@ -164,24 +164,24 @@ graph TD
 ### Phase 4: Frontend Control-Room UI & Interactive Visualizations
 **Goal:** Construct an interactive, modern railway traffic controller interface.
 
-- [ ] **Step 4.1: KPI Metrics Panel (`frontend/src/components/KPICards.tsx`)**
+- [x] **Step 4.1: KPI Metrics Panel (`frontend/src/components/KPICards.tsx`)**
   - Render cards: Corridor Capacity Gain %, Integrated Blocks Created, Total Closure Hours (Before vs After), Punctuality Retention %.
-- [ ] **Step 4.2: Interactive Marey Chart (`frontend/src/components/MareyChart.tsx`)**
+- [x] **Step 4.2: Interactive Marey Chart (`frontend/src/components/MareyChart.tsx`)**
   - High-performance SVG rendering of the 12-hour / 106 KM space-time grid.
   - Horizontal dashed lines for stations with chainage labels.
   - Vertical time grid lines at 60-minute intervals.
   - Train string lines: Emerald for Premium Passenger (Shatabdi/Rajdhani), Teal for Regular Passenger, Amber for Freight rakes.
   - Maintenance possession bounding boxes: Semi-transparent Orange (Individual), Red (Integrated Joint Block) with activity labels and hover tooltips.
-- [ ] **Step 4.3: Multi-Departmental Demand Queue & Table (`frontend/src/App.tsx` / `frontend/src/components/DemandTable.tsx`)**
+- [x] **Step 4.3: Multi-Departmental Demand Queue & Table (`frontend/src/App.tsx` / `frontend/src/components/DemandTable.tsx`)**
   - Tabular view with department badges (Blue = TMS, Amber = TDMS, Emerald = SMMS).
   - Criticality score badges, location span, duration, and status indicators.
-- [ ] **Step 4.4: Safety Handshake Dialog (`frontend/src/App.tsx` / `frontend/src/components/HandshakeModal.tsx`)**
+- [x] **Step 4.4: Safety Handshake Dialog (`frontend/src/App.tsx` / `frontend/src/components/HandshakeModal.tsx`)**
   - Modal dialog for granting Permit to Work (PTW).
   - TPC Private Number input, Section Controller identity confirmation, and cryptographic system token issue.
-- [ ] **Step 4.5: Root Layout Integration (`frontend/src/App.tsx`)**
+- [x] **Step 4.5: Root Layout Integration (`frontend/src/App.tsx`)**
   - Header with corridor status and "Run CP-SAT Optimizer" action.
   - TanStack Query hooks for asynchronous data polling and optimistic updates.
-- [ ] **Verification Gate:**
+- [x] **Verification Gate:**
   - `pnpm build` succeeds.
   - UI renders without layout shifts or console errors.
 
@@ -190,12 +190,12 @@ graph TD
 ### Phase 5: Dynamic Disruption Simulation & Re-Planning (Pitch Enhancer)
 **Goal:** Enable real-time "what-if" disruption simulation demonstrating adaptive replanning.
 
-- [ ] **Step 5.1: Disruption Panel Component (`frontend/src/components/DisruptionPanel.tsx`)**
+- [x] **Step 5.1: Disruption Panel Component (`frontend/src/components/DisruptionPanel.tsx`)**
   - UI controls to select train (e.g. 12424 Rajdhani), inject delay (e.g. $+45$ min), or add an emergency track speed restriction (TSR).
-- [ ] **Step 5.2: Dynamic Re-Plan Solver Trigger**
+- [x] **Step 5.2: Dynamic Re-Plan Solver Trigger**
   - Send disrupted state to `POST /api/disruption/simulate`.
   - Visual animation/transition on the Marey Chart showing train trajectory shifts and automatic maintenance window relocation.
-- [ ] **Verification Gate:**
+- [x] **Verification Gate:**
   - Disruption injection immediately updates Marey Chart train lines and adjusts maintenance blocks without overlapping.
 
 ---
@@ -203,12 +203,12 @@ graph TD
 ### Phase 6: End-to-End Verification, Demo Rehearsal & Git Tagging
 **Goal:** Perform full integration verification and lock the repository for presentation.
 
-- [ ] **Step 6.1: End-to-End Test Suite**
+- [x] **Step 6.1: End-to-End Test Suite**
   - Run full backend tests: `cd backend && uv run pytest -v`.
   - Run frontend type check and build: `cd frontend && pnpm build`.
-- [ ] **Step 6.2: SIH Pitch Protocol Rehearsal**
+- [x] **Step 6.2: SIH Pitch Protocol Rehearsal**
   - Verify 5-step demonstration flow (Siloed baseline $\to$ CP-SAT execution $\to$ Marey string chart inspection $\to$ Disruption injection $\to$ Safety handshake).
-- [ ] **Step 6.3: Atomic Commit & Clean Git History**
+- [x] **Step 6.3: Atomic Commit & Clean Git History**
   - Ensure all milestones are committed following Mitchell Hashimoto guidelines.
 
 ---
