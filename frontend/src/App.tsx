@@ -190,9 +190,9 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans relative">
       {/* 1. Top Enterprise Header Bar (matching screenshot navbar) */}
-      <header className="bg-slate-900 border-b border-slate-800 px-5 py-2.5 flex flex-wrap items-center justify-between sticky top-0 z-40 gap-3 text-xs text-white">
+      <header className="bg-slate-900 border-b border-slate-800 px-5 py-2.5 flex flex-wrap items-center justify-between sticky top-0 z-40 gap-3 text-xs text-white shadow-sm relative before:content-[''] before:absolute before:-top-96 before:left-0 before:right-0 before:h-96 before:bg-slate-900 before:pointer-events-none">
         {/* Left: Brand Pill & Navigation Tabs */}
         <div className="flex items-center space-x-4">
           {/* Brand Pill matching screenshot */}

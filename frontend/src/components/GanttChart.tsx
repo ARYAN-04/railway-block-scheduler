@@ -324,7 +324,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
       </div>
 
       {/* Main Gantt Grid Container with Smooth Scrollbar & Sticky Left Lane */}
-      <div className="overflow-x-auto relative">
+      <div className="overflow-x-auto relative hover-scrollbar">
         <div className="min-w-[1020px]">
           {/* Timeline Header Row */}
           <div className="flex border-b border-slate-300 bg-slate-50 sticky top-0 z-20">
