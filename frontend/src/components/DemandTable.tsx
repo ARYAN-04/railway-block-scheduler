@@ -101,319 +101,342 @@ export const DemandTable: React.FC<DemandTableProps> = ({
         </div>
       </div>
 
-      {/* Rows Container */}
-      <div className="divide-y divide-slate-200 bg-white">
-        {activeTab === 'POSSESSIONS' ? (
-          filteredDemands.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500 font-mono">
-              No maintenance demands match the selected filters.
+      {/* Horizontal Scrollable Table Wrapper */}
+      <div className="overflow-x-auto hover-scrollbar">
+        <div className="min-w-[1100px]">
+          {/* Aligned Table Column Headers */}
+          {activeTab === 'POSSESSIONS' ? (
+            <div className="grid grid-cols-[minmax(320px,3.5fr)_130px_90px_110px_110px_150px_minmax(230px,2fr)] px-4 py-2 bg-slate-100/90 border-b border-slate-200 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider items-center">
+              <div>DEMAND & LOCATION</div>
+              <div>ASSET TYPE</div>
+              <div>TRACK GMT</div>
+              <div>POWER BLK</div>
+              <div>SIG DISC</div>
+              <div>SCHEDULED SLOT</div>
+              <div className="text-right pr-2">OPERATIONAL STATUS</div>
             </div>
           ) : (
-            filteredDemands.map((demand) => {
-              const block = blockMap.get(demand.id);
-              const isSelected = selectedBlockId === demand.id;
-              const isExpanded = expandedId === demand.id;
-              const isBundled = block?.is_bundled;
-              const isAuthorized = block?.status === 'AUTHORIZED';
+            <div className="grid grid-cols-[minmax(320px,3.5fr)_130px_90px_110px_110px_150px_minmax(230px,2fr)] px-4 py-2 bg-slate-100/90 border-b border-slate-200 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider items-center">
+              <div>TRAIN & ROUTE</div>
+              <div>SERVICE TYPE</div>
+              <div>PRIORITY</div>
+              <div>START KM</div>
+              <div>DEST KM</div>
+              <div>TIMETABLE SLOT</div>
+              <div className="text-right pr-2">OPERATIONAL STATUS</div>
+            </div>
+          )}
 
-              // Clean, un-sloped department tag (no pastel circles)
-              const renderDeptTag = () => {
-                if (demand.department === 'TRACTION_TRD') {
+          {/* Rows Container */}
+          <div className="divide-y divide-slate-200 bg-white">
+            {activeTab === 'POSSESSIONS' ? (
+              filteredDemands.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-500 font-mono">
+                  No maintenance demands match the selected filters.
+                </div>
+              ) : (
+                filteredDemands.map((demand) => {
+                  const block = blockMap.get(demand.id);
+                  const isSelected = selectedBlockId === demand.id;
+                  const isExpanded = expandedId === demand.id;
+                  const isBundled = block?.is_bundled;
+                  const isAuthorized = block?.status === 'AUTHORIZED';
+
+                  const renderDeptTag = () => {
+                    if (demand.department === 'TRACTION_TRD') {
+                      return (
+                        <span className="w-12 h-6 rounded bg-orange-700 text-white font-mono text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                          TDMS
+                        </span>
+                      );
+                    }
+                    if (demand.department === 'SIGNAL_TELECOM') {
+                      return (
+                        <span className="w-12 h-6 rounded bg-indigo-700 text-white font-mono text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                          SMMS
+                        </span>
+                      );
+                    }
+                    return (
+                      <span className="w-12 h-6 rounded bg-teal-800 text-white font-mono text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                        TMS
+                      </span>
+                    );
+                  };
+
+                  const isDegradedOrCritical = demand.severity === 'CRITICAL' || demand.urgency_days_overdue > 10;
+                  const rowBg = isSelected
+                    ? 'bg-blue-50/70 ring-1 ring-blue-500'
+                    : isDegradedOrCritical
+                    ? 'bg-amber-50/40 hover:bg-amber-50/70'
+                    : 'bg-white hover:bg-slate-50';
+
                   return (
-                    <span className="w-12 h-6 rounded bg-orange-700 text-white font-mono text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                      TDMS
-                    </span>
-                  );
-                }
-                if (demand.department === 'SIGNAL_TELECOM') {
-                  return (
-                    <span className="w-12 h-6 rounded bg-indigo-700 text-white font-mono text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                      SMMS
-                    </span>
-                  );
-                }
-                return (
-                  <span className="w-12 h-6 rounded bg-teal-800 text-white font-mono text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                    TMS
-                  </span>
-                );
-              };
-
-              const isDegradedOrCritical = demand.severity === 'CRITICAL' || demand.urgency_days_overdue > 10;
-              const rowBg = isSelected
-                ? 'bg-blue-50/70 ring-1 ring-blue-500'
-                : isDegradedOrCritical
-                ? 'bg-amber-50/40 hover:bg-amber-50/70'
-                : 'bg-white hover:bg-slate-50';
-
-              return (
-                <div key={demand.id} className={`${rowBg} transition-colors`}>
-                  {/* Main High-Density Row matching screenshot layout */}
-                  <div className="px-4 py-2.5 flex flex-wrap lg:flex-nowrap items-center justify-between gap-3 text-xs">
-                    {/* Left: Department Tag, Title & Subtitle */}
-                    <div className="flex items-center space-x-3 min-w-[260px] lg:w-[320px] flex-shrink-0">
-                      {renderDeptTag()}
-                      <div className="truncate">
-                        <div className="font-bold text-slate-900 truncate hover:text-blue-700 transition-colors">
-                          {demand.id} • {demand.activity}
+                    <div key={demand.id} className={`${rowBg} transition-colors`}>
+                      {/* Grid Row: Pixel-Aligned Columns */}
+                      <div className="grid grid-cols-[minmax(320px,3.5fr)_130px_90px_110px_110px_150px_minmax(230px,2fr)] px-4 py-2.5 items-center gap-2 text-xs">
+                        {/* 1. Demand ID & Location Span */}
+                        <div className="flex items-center space-x-3 pr-2 min-w-0">
+                          {renderDeptTag()}
+                          <div className="truncate min-w-0">
+                            <div className="font-bold text-slate-900 truncate hover:text-blue-700 transition-colors">
+                              {demand.id} • {demand.activity}
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-mono truncate">
+                              {demand.duration_minutes} min • KM {demand.start_km.toFixed(1)}–{demand.end_km.toFixed(1)}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-[11px] text-slate-500 font-mono flex items-center space-x-1.5 truncate">
-                          <span className="font-medium text-slate-700">{demand.duration_minutes} min</span>
-                          <span>•</span>
-                          <span>KM {demand.start_km.toFixed(1)}–{demand.end_km.toFixed(1)}</span>
+
+                        {/* 2. Asset Type */}
+                        <div className="font-semibold text-slate-900 truncate font-mono text-[11px]">
+                          {demand.asset_type}
                         </div>
-                      </div>
-                    </div>
 
-                    {/* Middle Columns: Clean Technical Data (no pastel bubbles) */}
-                    <div className="hidden sm:flex items-center space-x-4 text-[11px] font-mono text-slate-700 flex-1 justify-around px-2">
-                      {/* Asset Type */}
-                      <div className="flex flex-col items-start min-w-[65px]">
-                        <span className="text-[10px] text-slate-400 uppercase font-bold">ASSET</span>
-                        <span className="font-semibold text-slate-900">{demand.asset_type}</span>
-                      </div>
+                        {/* 3. Track GMT (Aligned) */}
+                        <div className="font-mono text-[11px] text-slate-800 font-semibold">
+                          {demand.track_gmt} GMT
+                        </div>
 
-                      {/* Track GMT */}
-                      <div className="flex flex-col items-start min-w-[65px]">
-                        <span className="text-[10px] text-slate-400 uppercase font-bold">GMT</span>
-                        <span className="text-slate-800 font-semibold">{demand.track_gmt}</span>
-                      </div>
+                        {/* 4. Power Block Interlock (Aligned) */}
+                        <div className="font-mono text-xs">
+                          {demand.power_block_required ? (
+                            <span className="text-orange-700 font-bold">Required</span>
+                          ) : (
+                            <span className="text-slate-400">None</span>
+                          )}
+                        </div>
 
-                      {/* Power Block Interlock: Clean industrial indicator */}
-                      <div className="flex flex-col items-start min-w-[70px]">
-                        <span className="text-[10px] text-slate-400 uppercase font-bold">POWER BLK</span>
-                        {demand.power_block_required ? (
-                          <span className="text-orange-800 font-bold text-xs">Required</span>
-                        ) : (
-                          <span className="text-slate-400 text-xs">None</span>
-                        )}
-                      </div>
+                        {/* 5. Signal Disconnection Interlock (Aligned) */}
+                        <div className="font-mono text-xs">
+                          {demand.signal_disconnection_required ? (
+                            <span className="text-indigo-700 font-bold">Required</span>
+                          ) : (
+                            <span className="text-slate-400">None</span>
+                          )}
+                        </div>
 
-                      {/* Signal Disconnection: Clean industrial indicator */}
-                      <div className="flex flex-col items-start min-w-[70px]">
-                        <span className="text-[10px] text-slate-400 uppercase font-bold">SIG DISC</span>
-                        {demand.signal_disconnection_required ? (
-                          <span className="text-indigo-800 font-bold text-xs">Required</span>
-                        ) : (
-                          <span className="text-slate-400 text-xs">None</span>
-                        )}
-                      </div>
-
-                      {/* Scheduled Window */}
-                      <div className="flex flex-col items-start min-w-[90px]">
-                        <span className="text-[10px] text-slate-400 uppercase font-bold">SLOT</span>
-                        <div className="text-[11px] font-bold text-slate-900">
+                        {/* 6. Scheduled Slot (Aligned) */}
+                        <div className="font-mono text-[11px] font-bold text-slate-900">
                           {block ? (
                             <span>{formatTime(block.scheduled_start_min)} – {formatTime(block.scheduled_end_min)}</span>
                           ) : (
                             <span className="text-slate-400 font-normal">Unscheduled</span>
                           )}
                         </div>
-                      </div>
-                    </div>
 
-                    {/* Right: Clean Operational Status Button & Count Boxes */}
-                    <div className="flex items-center space-x-2.5 flex-shrink-0">
-                      {/* Clean Industrial Status Box (matches reference screenshot style) */}
-                      <button
-                        onClick={() => onOpenHandshake(demand.id)}
-                        className="px-3 py-1 rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 flex items-center space-x-1.5 font-sans text-xs font-semibold shadow-sm transition-colors"
-                      >
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            isAuthorized
-                              ? 'bg-emerald-600'
-                              : isBundled
-                              ? 'bg-purple-700'
-                              : isDegradedOrCritical
-                              ? 'bg-amber-600'
-                              : 'bg-emerald-600'
-                          }`}
-                        />
-                        <span className="font-bold">
-                          {isAuthorized
-                            ? 'PTW Authorized'
-                            : isBundled
-                            ? 'Integrated Joint'
-                            : isDegradedOrCritical
-                            ? 'Degraded Mode'
-                            : 'Operational'}
-                        </span>
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
-                      </button>
-
-                      {/* Numeric Indicator Badges (matching screenshot's square boxes) */}
-                      <div className="flex items-center space-x-1 font-mono text-[11px]">
-                        <span
-                          title="Conflicts: 0"
-                          className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-600 font-bold"
-                        >
-                          0
-                        </span>
-
-                        <span
-                          title={isBundled ? `${block?.bundled_with.length} Joint Bundled Demands` : '0 Bundled Peers'}
-                          className={`px-1.5 py-0.5 rounded font-bold ${
-                            isBundled
-                              ? 'bg-purple-800 text-white'
-                              : 'bg-slate-100 border border-slate-300 text-slate-500'
-                          }`}
-                        >
-                          {isBundled ? (block?.bundled_with.length || 1) : 0}
-                        </span>
-
-                        <span
-                          title={`DCS Criticality: ${demand.criticality_score || 80}/100`}
-                          className={`px-1.5 py-0.5 rounded font-bold ${
-                            isDegradedOrCritical
-                              ? 'bg-rose-600 text-white'
-                              : 'bg-slate-100 border border-slate-300 text-slate-600'
-                          }`}
-                        >
-                          {demand.severity === 'CRITICAL' ? 'C' : demand.severity === 'URGENT' ? 'U' : 'R'}
-                        </span>
-                      </div>
-
-                      {/* Expand / Collapse Button */}
-                      <button
-                        onClick={() => setExpandedId(isExpanded ? null : demand.id)}
-                        className="p-1 text-slate-400 hover:text-slate-700 transition-colors"
-                      >
-                        <ChevronDown
-                          className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Expanded Detail View */}
-                  {isExpanded && (
-                    <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 text-xs font-mono text-slate-700 grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div>
-                        <div className="text-[10px] text-slate-500 uppercase font-bold">
-                          Asset & Work Scope
-                        </div>
-                        <div className="text-slate-900 font-bold mt-0.5">{demand.asset_type}</div>
-                        <div className="text-[11px] text-slate-600">
-                          Activity: {demand.activity}
-                        </div>
-                        <div className="text-[11px] text-slate-600">
-                          Spatial Span: KM {demand.start_km.toFixed(1)} to KM {demand.end_km.toFixed(1)}
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="text-[10px] text-slate-500 uppercase font-bold">
-                          Safety & Interlock Directives
-                        </div>
-                        <div className="mt-0.5 flex flex-col space-y-0.5 text-[11px]">
-                          <div>
-                            Traction Power Block:{' '}
-                            <span className={demand.power_block_required ? 'text-amber-800 font-bold' : 'text-slate-500'}>
-                              {demand.power_block_required ? 'MANDATORY (TPC PN Required)' : 'NOT REQUIRED'}
-                            </span>
-                          </div>
-                          <div>
-                            Signal Disconnection:{' '}
-                            <span className={demand.signal_disconnection_required ? 'text-indigo-800 font-bold' : 'text-slate-500'}>
-                              {demand.signal_disconnection_required ? 'MANDATORY (S&T Interlock)' : 'NOT REQUIRED'}
-                            </span>
-                          </div>
-                          <div>
-                            Overdue Days: <span className="text-slate-900 font-bold">{demand.urgency_days_overdue} days</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col justify-between">
-                        <div>
-                          <div className="text-[10px] text-slate-500 uppercase font-bold">
-                            G&SR PTW Status
-                          </div>
-                          <div className="mt-0.5 text-[11px]">
-                            {block?.system_private_number ? (
-                              <div className="text-emerald-700 font-bold">
-                                PN: {block.system_private_number} (PTW: {block.ptw_id})
-                              </div>
-                            ) : (
-                              <div className="text-slate-500 font-semibold">
-                                Pending Private Number Exchange
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="mt-2 flex justify-end">
+                        {/* 7. Status Button & Counters (Aligned Right) */}
+                        <div className="flex items-center justify-end space-x-2 flex-shrink-0">
+                          {/* Clean Status Button */}
                           <button
                             onClick={() => onOpenHandshake(demand.id)}
-                            className="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs font-sans font-bold transition-colors shadow-sm"
+                            className="px-2.5 py-1 rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 flex items-center space-x-1.5 font-sans text-xs font-semibold shadow-sm transition-colors"
                           >
-                            Open Digital PTW Form
+                            <span
+                              className={`w-2 h-2 rounded-full ${
+                                isAuthorized
+                                  ? 'bg-emerald-600'
+                                  : isBundled
+                                  ? 'bg-purple-700'
+                                  : isDegradedOrCritical
+                                  ? 'bg-amber-600'
+                                  : 'bg-emerald-600'
+                              }`}
+                            />
+                            <span className="font-bold">
+                              {isAuthorized
+                                ? 'PTW Authorized'
+                                : isBundled
+                                ? 'Integrated Joint'
+                                : isDegradedOrCritical
+                                ? 'Degraded Mode'
+                                : 'Operational'}
+                            </span>
+                            <ChevronRight className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
+                          </button>
+
+                          {/* Numeric Counters */}
+                          <div className="flex items-center space-x-1 font-mono text-[11px]">
+                            <span
+                              title="Conflicts: 0"
+                              className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-600 font-bold"
+                            >
+                              0
+                            </span>
+
+                            <span
+                              title={isBundled ? `${block?.bundled_with.length} Joint Bundled Demands` : '0 Bundled Peers'}
+                              className={`px-1.5 py-0.5 rounded font-bold ${
+                                isBundled
+                                  ? 'bg-purple-800 text-white'
+                                  : 'bg-slate-100 border border-slate-300 text-slate-500'
+                              }`}
+                            >
+                              {isBundled ? (block?.bundled_with.length || 1) : 0}
+                            </span>
+
+                            <span
+                              title={`DCS Criticality: ${demand.criticality_score || 80}/100`}
+                              className={`px-1.5 py-0.5 rounded font-bold ${
+                                isDegradedOrCritical
+                                  ? 'bg-rose-600 text-white'
+                                  : 'bg-slate-100 border border-slate-300 text-slate-600'
+                              }`}
+                            >
+                              {demand.severity === 'CRITICAL' ? 'C' : demand.severity === 'URGENT' ? 'U' : 'R'}
+                            </span>
+                          </div>
+
+                          {/* Expand Toggle */}
+                          <button
+                            onClick={() => setExpandedId(isExpanded ? null : demand.id)}
+                            className="p-1 text-slate-400 hover:text-slate-700 transition-colors"
+                          >
+                            <ChevronDown
+                              className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                            />
                           </button>
                         </div>
                       </div>
+
+                      {/* Expanded View */}
+                      {isExpanded && (
+                        <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 text-xs font-mono text-slate-700 grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <div className="text-[10px] text-slate-500 uppercase font-bold">
+                              Asset & Work Scope
+                            </div>
+                            <div className="text-slate-900 font-bold mt-0.5">{demand.asset_type}</div>
+                            <div className="text-[11px] text-slate-600">
+                              Activity: {demand.activity}
+                            </div>
+                            <div className="text-[11px] text-slate-600">
+                              Spatial Span: KM {demand.start_km.toFixed(1)} to KM {demand.end_km.toFixed(1)}
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-[10px] text-slate-500 uppercase font-bold">
+                              Safety & Interlock Directives
+                            </div>
+                            <div className="mt-0.5 flex flex-col space-y-0.5 text-[11px]">
+                              <div>
+                                Traction Power Block:{' '}
+                                <span className={demand.power_block_required ? 'text-amber-800 font-bold' : 'text-slate-500'}>
+                              {demand.power_block_required ? 'MANDATORY (TPC PN Required)' : 'NOT REQUIRED'}
+                            </span>
+                              </div>
+                              <div>
+                                Signal Disconnection:{' '}
+                                <span className={demand.signal_disconnection_required ? 'text-indigo-800 font-bold' : 'text-slate-500'}>
+                              {demand.signal_disconnection_required ? 'MANDATORY (S&T Interlock)' : 'NOT REQUIRED'}
+                            </span>
+                              </div>
+                              <div>
+                                Overdue Days: <span className="text-slate-900 font-bold">{demand.urgency_days_overdue} days</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col justify-between">
+                            <div>
+                              <div className="text-[10px] text-slate-500 uppercase font-bold">
+                                G&SR PTW Status
+                              </div>
+                              <div className="mt-0.5 text-[11px]">
+                                {block?.system_private_number ? (
+                                  <div className="text-emerald-700 font-bold">
+                                    PN: {block.system_private_number} (PTW: {block.ptw_id})
+                                  </div>
+                                ) : (
+                                  <div className="text-slate-500 font-semibold">
+                                    Pending Private Number Exchange
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="mt-2 flex justify-end">
+                              <button
+                                onClick={() => onOpenHandshake(demand.id)}
+                                className="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-white text-xs font-sans font-bold transition-colors shadow-sm"
+                              >
+                                Open Digital PTW Form
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })
-          )
-        ) : (
-          /* Trains Fleet Tab */
-          trains.map((train) => (
-            <div key={train.id} className="bg-white hover:bg-slate-50 px-4 py-2.5 flex items-center justify-between gap-3 text-xs transition-colors">
-              <div className="flex items-center space-x-3 min-w-[260px] lg:w-[320px]">
-                <span className="w-12 h-6 rounded bg-blue-800 text-white font-mono text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                  TRAIN
-                </span>
-                <div className="truncate">
-                  <div className="font-bold text-slate-900 truncate">
-                    {train.id} • {train.name}
+                  );
+                })
+              )
+            ) : (
+              /* Trains Tab Aligned to Same Exact Grid */
+              trains.map((train) => (
+                <div key={train.id} className="grid grid-cols-[minmax(320px,3.5fr)_130px_90px_110px_110px_150px_minmax(230px,2fr)] px-4 py-2.5 items-center gap-2 text-xs hover:bg-slate-50 transition-colors">
+                  {/* Train ID & Name */}
+                  <div className="flex items-center space-x-3 pr-2 min-w-0">
+                    <span className="w-12 h-6 rounded bg-blue-800 text-white font-mono text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                      TRAIN
+                    </span>
+                    <div className="truncate min-w-0">
+                      <div className="font-bold text-slate-900 truncate">
+                        {train.id} • {train.name}
+                      </div>
+                      <div className="text-[11px] text-slate-500 font-mono truncate">
+                        Priority {train.priority}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-[11px] text-slate-500 font-mono truncate">
-                    {train.type.replace('_', ' ')} • Priority {train.priority}
+
+                  {/* Service Type */}
+                  <div className="font-semibold text-slate-900 truncate font-mono text-[11px]">
+                    {train.type.replace('_', ' ')}
+                  </div>
+
+                  {/* Priority */}
+                  <div className="font-mono text-[11px] text-slate-800 font-semibold">
+                    P{train.priority}
+                  </div>
+
+                  {/* Start KM */}
+                  <div className="font-mono text-xs text-slate-700">
+                    KM {train.start_km.toFixed(1)}
+                  </div>
+
+                  {/* End KM */}
+                  <div className="font-mono text-xs text-slate-700">
+                    KM {train.end_km.toFixed(1)}
+                  </div>
+
+                  {/* Timetable Slot */}
+                  <div className="font-mono text-[11px] font-bold text-slate-900">
+                    {formatTime(train.dep_min)} → {formatTime(train.arr_min)}
+                  </div>
+
+                  {/* Operational Status */}
+                  <div className="flex items-center justify-end space-x-2 flex-shrink-0">
+                    <div className="px-2.5 py-1 rounded border border-slate-300 bg-white text-slate-800 flex items-center space-x-1.5 font-sans text-xs font-semibold shadow-sm">
+                      <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                      <span className="font-bold">Operational</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                    </div>
+
+                    <div className="flex items-center space-x-1 font-mono text-[11px]">
+                      <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-600 font-bold">
+                        0
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-600 font-bold">
+                        0
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="hidden sm:flex items-center space-x-6 text-[11px] font-mono text-slate-700 flex-1 justify-around px-2">
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">CORRIDOR</span>
-                  <span className="font-bold">KM {train.start_km} → {train.end_km}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">DEPARTURE</span>
-                  <span className="font-bold">{formatTime(train.dep_min)}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">ARRIVAL</span>
-                  <span className="font-bold">{formatTime(train.arr_min)}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">TRANSIT</span>
-                  <span className="font-bold">{train.arr_min - train.dep_min} min</span>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2.5">
-                <div className="px-3 py-1 rounded border border-slate-300 bg-white text-slate-800 flex items-center space-x-1.5 font-sans text-xs font-semibold shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-                  <span className="font-bold">Operational</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </div>
-
-                <div className="flex items-center space-x-1 font-mono text-[11px]">
-                  <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-600 font-bold">
-                    0
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-slate-600 font-bold">
-                    0
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
