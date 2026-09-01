@@ -102,7 +102,7 @@ export const DemandTable: React.FC<DemandTableProps> = ({
       </div>
 
       {/* Horizontal Scrollable Table Wrapper */}
-      <div className="overflow-x-auto hover-scrollbar">
+      <div className="overflow-x-auto gantt-scrollbar">
         <div className="min-w-[1100px]">
           {/* Aligned Table Column Headers */}
           {activeTab === 'POSSESSIONS' ? (
