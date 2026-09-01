@@ -146,8 +146,12 @@ export const App: React.FC = () => {
       setCorridor(corrData);
       setTrains(trainData);
       setDemands(demandData);
-      setScheduledBlocks(res.scheduled_blocks);
-      setMetrics(res.metrics);
+      if (res && Array.isArray(res.scheduled_blocks)) {
+        setScheduledBlocks(res.scheduled_blocks);
+      }
+      if (res && res.metrics) {
+        setMetrics(res.metrics);
+      }
     } finally {
       setIsDisrupting(false);
     }

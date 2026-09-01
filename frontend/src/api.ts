@@ -483,16 +483,27 @@ export async function simulateDisruption(
 
 export async function resetData(): Promise<OptimizeResponse> {
   try {
-    const res = await fetchWithTimeout(`${API_BASE}/reset`, {
+    const res = await fetchWithTimeout(`${API_BASE}/reset?reoptimize=true`, {
       method: 'POST',
       body: JSON.stringify({}),
     });
     if (res.ok) {
+      const data = await res.json();
       offlineSimulator.reset();
-      return await res.json();
+      if (data && Array.isArray(data.scheduled_blocks) && data.scheduled_blocks.length > 0) {
+        return {
+          scheduled_blocks: data.scheduled_blocks,
+          metrics: data.metrics || offlineSimulator.getMetrics(),
+          uncoordinated_demands: offlineSimulator.demands,
+          execution_time_ms: 50,
+          status: 'RESET_COMPLETED',
+        };
+      }
+      // If reset didn't return blocks, call runOptimize() to obtain fresh schedule
+      return await runOptimize();
     }
   } catch {
-    // Backend offline, reset local state
+    // Backend offline, fallback to local simulator
   }
 
   offlineSimulator.reset();
