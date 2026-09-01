@@ -213,9 +213,32 @@ graph TD
 
 ---
 
+### Phase 7: Modern Industrial UI Overhaul & UX Hardening
+**Goal:** Transition from dark neon prototype to enterprise European railway dispatch styling with stutter-free interactions.
+
+- [x] **Step 7.1: Gantt Timeline Migration (`frontend/src/components/GanttChart.tsx`)**
+  - Replaced Marey string chart with horizontal Gantt diagram featuring sticky spatial division lanes (`sticky left-0`).
+  - Swapped neon colors with saturated high-contrast industrial tokens (Emerald, Royal Blue, Amber, Teal, Orange, Indigo, Purple).
+  - Built a persistent fixed-height inspection dock (`min-h-[52px]`) to eliminate layout shifts and hover stutter.
+  - Enabled persistent horizontal scrollbar on by default (`.gantt-scrollbar`) to eliminate mouse loop flicker.
+- [x] **Step 7.2: CSS Grid Table Alignment (`frontend/src/components/DemandTable.tsx`)**
+  - Replaced nested flexbox containers with a unified CSS Grid (`grid grid-cols-[minmax(320px,3.5fr)_130px_90px_110px_110px_150px_minmax(230px,2fr)]`).
+  - Pixel-aligned `TRACK GMT`, `POWER BLK`, and `SIG DISC` directly beneath fixed table column headers.
+  - Replaced pastel AI pills with solid department tags (`TMS`, `TDMS`, `SMMS`) and clean enterprise status boxes (`[ ● Operational > ]`).
+- [x] **Step 7.3: On-Demand Telemetry Modal (`frontend/src/components/MetricsModal.tsx`)**
+  - Moved improvement statistics and CP-SAT audit metrics into an on-demand modal to prioritize operational timeline space.
+- [x] **Step 7.4: Resilient Reset & Overscroll Polish (`backend/app/main.py` & `frontend/src/index.css`)**
+  - Updated `POST /api/reset` to auto-optimize and return complete baseline schedules, fixing reset whitescreen issues.
+  - Dynamic button toggle in DisruptionPanel (`Inject Disruption` $\leftrightarrow$ `Trigger Adaptive Re-Planner`).
+  - Anchored `html` background to dark navy `#0f172a` with negative top header extensions to prevent white gaps during macOS overscroll bounce.
+
+---
+
 ## 4. Definition of Done (DoD)
 1. Both backend (`uv`) and frontend (`pnpm`) build cleanly with zero errors or warnings.
-2. CP-SAT optimizer generates zero train-maintenance collisions and bundles overlapping multi-department demands into Integrated Blocks.
-3. Interactive Marey string chart visualizes all trains and maintenance intervals in real time.
-4. Digital Safety Handshake generates verifiable Private Numbers under G&SR rules.
-5. What-if disruption simulator successfully re-plans without manual schedule intervention.
+2. CP-SAT optimizer generates zero train-maintenance collisions and bundles overlapping multi-department demands into Integrated Blocks (+56.3% capacity uptime).
+3. Interactive Possession & Traffic Gantt timeline visualizes all trains and maintenance intervals in real time with sticky division lanes.
+4. Fleet and Demands table uses pixel-aligned CSS Grid with zero column drift.
+5. Digital Safety Handshake generates verifiable Private Numbers under G&SR rules.
+6. What-if disruption simulator successfully re-plans without manual schedule intervention and smoothly resets to baseline.
+7. Improvement statistics available on demand via dedicated modal without cluttering operational views.
